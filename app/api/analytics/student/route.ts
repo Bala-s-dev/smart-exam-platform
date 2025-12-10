@@ -38,7 +38,6 @@ export async function GET() {
         });
       });
 
-    // Convert map to array and sort by frequency
     const weakTopics = Array.from(weakTopicMap.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
