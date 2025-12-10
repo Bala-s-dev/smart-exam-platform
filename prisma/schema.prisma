@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+}
+
+// 1. User Entity
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdExams Exam[]        @relation("InstructorExams")
+  attempts     ExamAttempt[]
+}
+
+// 2. Topic Entity (for classification)
+model Topic {
+  id    String @id @default(cuid())
+  name  String @unique
+  exams ExamTopic[]
+}
+
+// 3. Exam Entity
+model Exam {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  instructorId String
+  instructor   User    @relation("InstructorExams", fields: [instructorId], references: [id])
+  
+  durationMinutes Int  @default(30)
+  passingScore    Int  @default(50)
+  isPublished     Boolean @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  questions   Question[]
+  topics      ExamTopic[]
+  attempts    ExamAttempt[]
+}
+
+// Join table for Exam <-> Topic (Many-to-Many)
+model ExamTopic {
+  examId  String
+  topicId String
+  exam    Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([examId, topicId])
+}
+
+// 4. Question Entity
+model Question {
+  id          String       @id @default(cuid())
+  examId      String
+  exam        Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  
+  text        String
+  type        QuestionType @default(MCQ)
+  difficulty  Difficulty   @default(MEDIUM)
+  
+  // JSON structure for options: [{ text: "A", isCorrect: true }, ...]
+  options     Json         
+  
+  explanation String?      // For AI feedback
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  answers     Answer[]
+}
+
+// 5. Exam Attempt (Session)
+model ExamAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  
+  score     Float?
+  isPassed  Boolean?
+  
+  // AI Analysis Fields
+  aiFeedback      String?  @db.Text
+  weakTopics      Json?    // Array of topic names
+  predictedScore  Float?   // AI prediction for next attempt
+  
+  answers   Answer[]
+}
+
+// 6. Answer (Individual responses in an attempt)
+model Answer {
+  id              String      @id @default(cuid())
+  attemptId       String
+  attempt         ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  
+  questionId      String
+  question        Question    @relation(fields: [questionId], references: [id])
+  
+  selectedOption  String      // The text or index of the option selected
+  isCorrect       Boolean
+  timeTakenSeconds Int?       // Time spent on this specific question
+}

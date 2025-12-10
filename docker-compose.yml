@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: smart_exam_db
+    restart: always
+    environment:
+      POSTGRES_USER: Bala
+      POSTGRES_PASSWORD: bala1234
+      POSTGRES_DB: smart_exam_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
