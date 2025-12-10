@@ -15,17 +15,16 @@ const submitSchema = z.object({
 // 1. GET Request (Fetch Attempt)
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // <-- TYPE CHANGED
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   const session = await getSession();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // ✅ CRITICAL FIX: Await the params object
   const { id } = await params;
 
   const attempt = await prisma.examAttempt.findUnique({
-    where: { id }, // Now 'id' is a string, not undefined
+    where: { id }, 
     include: {
       exam: { include: { questions: true } },
       answers: true,
@@ -42,13 +41,12 @@ export async function GET(
 // 2. PUT Request (Submit Answers)
 export async function PUT(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // <-- TYPE CHANGED
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   const session = await getSession();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  // ✅ CRITICAL FIX: Await the params object
+  
   const { id } = await params;
 
   try {
