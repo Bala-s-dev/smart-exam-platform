@@ -1,6 +1,6 @@
-import { PrismaClient, Role, Difficulty } from '@prisma/client';
-// In a real app, use bcrypt to hash passwords.
-// For seeding simplicity, we simulate a hash or you can install bcryptjs.
+import { PrismaClient, Role, Difficulty, QuestionType } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -15,11 +15,10 @@ async function main() {
   await prisma.exam.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Create Users
-  // Note: Password should be hashed in real implementation.
-  // Assuming 'password123' hashed string for demo.
-  const passwordHash = '$2b$10$EpRnTzVlqHNP0.fKbXTnLOsyteAs.x.k.r/..f.e/..s';
+  // 2. Hash the password correctly
+  const passwordHash = await bcrypt.hash('password123', 10);
 
+  // 3. Create Users
   const admin = await prisma.user.create({
     data: {
       name: 'Admin User',
@@ -47,57 +46,11 @@ async function main() {
     },
   });
 
-  // 3. Create Topics
+  // 4. Create Topics
   const topicReact = await prisma.topic.create({ data: { name: 'React.js' } });
   const topicNode = await prisma.topic.create({ data: { name: 'Node.js' } });
-
-  // 4. Create an Exam
-  const exam = await prisma.exam.create({
-    data: {
-      title: 'Fullstack Basics',
-      description: 'Test your knowledge on React and Node.',
-      instructorId: instructor.id,
-      durationMinutes: 45,
-      isPublished: true,
-      topics: {
-        create: [{ topicId: topicReact.id }, { topicId: topicNode.id }],
-      },
-    },
-  });
-
-  // 5. Add Questions
-  await prisma.question.createMany({
-    data: [
-      {
-        examId: exam.id,
-        text: 'What is a React Hook?',
-        difficulty: Difficulty.EASY,
-        options: [
-          { text: 'A fishing tool', isCorrect: false },
-          {
-            text: 'A function to use state in functional components',
-            isCorrect: true,
-          },
-          { text: 'A class method', isCorrect: false },
-          { text: 'A database connector', isCorrect: false },
-        ],
-        explanation:
-          'Hooks allow functional components to have state and lifecycle features.',
-      },
-      {
-        examId: exam.id,
-        text: 'Which module handles file paths in Node.js?',
-        difficulty: Difficulty.MEDIUM,
-        options: [
-          { text: 'fs', isCorrect: false },
-          { text: 'path', isCorrect: true },
-          { text: 'http', isCorrect: false },
-          { text: 'os', isCorrect: false },
-        ],
-        explanation:
-          'The path module provides utilities for working with file and directory paths.',
-      },
-    ],
+  const topicCyber = await prisma.topic.create({
+    data: { name: 'Cybersecurity' },
   });
 
   console.log('✅ Seeding finished.');
