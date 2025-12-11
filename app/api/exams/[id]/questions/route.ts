@@ -3,20 +3,18 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { questionSchema } from '@/lib/validators';
 
-// GET: List questions for a specific exam
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+type Props = { params: Promise<{ id: string }> };
+
+export async function GET(req: Request, { params }: Props) {
   const session = await getSession();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Validation: In a real app, ensure student only sees questions during an active attempt
-  // For now, we return them for the instructor/preview
+  // ✅ Await params
+  const { id } = await params;
 
   const questions = await prisma.question.findMany({
-    where: { examId: params.id },
+    where: { examId: id },
     select: {
       id: true,
       text: true,
@@ -30,15 +28,14 @@ export async function GET(
   return NextResponse.json(questions);
 }
 
-// POST: Add a single manual question
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: Request, { params }: Props) {
   const session = await getSession();
   if (!session || (session as any).role !== 'INSTRUCTOR') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  // ✅ Await params
+  const { id } = await params;
 
   try {
     const body = await req.json();
@@ -46,9 +43,9 @@ export async function POST(
 
     const question = await prisma.question.create({
       data: {
-        examId: params.id,
+        examId: id,
         ...validated,
-        options: validated.options as any, // Cast JSON for Prisma
+        options: validated.options as any,
       },
     });
 

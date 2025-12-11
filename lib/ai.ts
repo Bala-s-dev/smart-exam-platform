@@ -9,8 +9,8 @@ export async function generateQuestionsAI(
   difficulty: string
 ) {
   try {
-    // Use 'gemini-1.5-flash' for speed and efficiency
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // FIX: Use the specific model available in your list: 'gemini-2.5-flash'
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
       You are a strict teacher. Generate ${count} ${difficulty} level multiple-choice questions about "${topic}".
@@ -43,9 +43,7 @@ export async function generateQuestionsAI(
       .replace(/```/g, '')
       .trim();
 
-    // Validate JSON parsing
-    const questions = JSON.parse(text);
-    return questions;
+    return JSON.parse(text);
   } catch (error) {
     console.error('Gemini AI Generation Error:', error);
     throw new Error('Failed to generate questions via Gemini AI');

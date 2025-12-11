@@ -2,22 +2,25 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// Fix Type Definition
+type Props = { params: Promise<{ id: string }> };
+
+export async function GET(req: Request, { params }: Props) {
   const session = await getSession();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // ✅ Await params
+  const { id } = await params;
+
   try {
     const exam = await prisma.exam.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         topics: { include: { topic: true } },
         instructor: { select: { name: true } },
         questions: {
-          select: { id: true, type: true }, // Don't return answers here!
+          select: { id: true, type: true },
         },
       },
     });
@@ -31,25 +34,24 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request, { params }: Props) {
   const session = await getSession();
   if (!session || (session as any).role !== 'INSTRUCTOR') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
+  // ✅ Await params
+  const { id } = await params;
+
   try {
-    // Ensure the instructor owns this exam
     const count = await prisma.exam.count({
-      where: { id: params.id, instructorId: (session as any).id },
+      where: { id, instructorId: (session as any).id },
     });
 
     if (count === 0)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    await prisma.exam.delete({ where: { id: params.id } });
+    await prisma.exam.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
