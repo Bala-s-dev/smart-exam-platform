@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react'; // Ensure you have lucide-react, or remove icon
+import { Progress } from '@/components/ui/progress'; // Ensure this is imported
+import { Loader2, Sparkles } from 'lucide-react';
 
 export default function ExamAnalyticsPage({
   params,
@@ -21,8 +22,11 @@ export default function ExamAnalyticsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // NEW: States for AI Loading Animation
+  const [analyzing, setAnalyzing] = useState(false);
+  const [progress, setProgress] = useState(0);
+
   useEffect(() => {
-    // 1. Unwrap the Exam ID from params
     params.then((p) => {
       setExamId(p.id);
       loadData(p.id, urlAttemptId);
@@ -32,26 +36,21 @@ export default function ExamAnalyticsPage({
   const loadData = async (eId: string, aId: string | null) => {
     try {
       let targetAttemptId = aId;
-
-      // AUTO-DETECT: If no attempt ID in URL, find the latest one for this exam
       if (!targetAttemptId) {
-        const res = await fetch('/api/attempts'); // Fetches user's history
+        const res = await fetch('/api/attempts');
         const history = await res.json();
-        // Find latest attempt for this specific exam
         const latest = history.find(
           (h: any) => h.examId === eId && h.completedAt
         );
 
-        if (latest) {
-          targetAttemptId = latest.id;
-        } else {
+        if (latest) targetAttemptId = latest.id;
+        else {
           setError('No completed attempts found for this exam.');
           setLoading(false);
           return;
         }
       }
 
-      // 2. Fetch specific attempt details
       if (targetAttemptId) {
         const res = await fetch(`/api/attempts/${targetAttemptId}`);
         if (!res.ok) throw new Error('Failed to load attempt');
@@ -67,11 +66,32 @@ export default function ExamAnalyticsPage({
 
   const getPrediction = async () => {
     if (!attempt) return;
+
+    // 1. Start Animation
+    setAnalyzing(true);
+    setProgress(0);
+
+    // Simulate progress bar filling up to 90%
+    const interval = setInterval(() => {
+      setProgress((prev) => (prev >= 90 ? 90 : prev + 10));
+    }, 500);
+
     try {
       const res = await fetch('/api/ai/predict', { method: 'POST' });
       const json = await res.json();
-      setPrediction(json);
+
+      // 2. Finish Animation
+      clearInterval(interval);
+      setProgress(100);
+
+      // Small delay to let user see 100%
+      setTimeout(() => {
+        setPrediction(json);
+        setAnalyzing(false);
+      }, 500);
     } catch (e) {
+      clearInterval(interval);
+      setAnalyzing(false);
       alert('AI Service Unavailable');
     }
   };
@@ -132,7 +152,8 @@ export default function ExamAnalyticsPage({
             <CardTitle>AI Coach</CardTitle>
           </CardHeader>
           <CardContent>
-            {!prediction ? (
+            {/* STATE 1: Not Started */}
+            {!prediction && !analyzing && (
               <div className="text-center py-4">
                 <p className="mb-4 text-sm text-gray-500">
                   Get personalized study tips based on this result.
@@ -141,29 +162,49 @@ export default function ExamAnalyticsPage({
                   onClick={getPrediction}
                   className="w-full bg-purple-600 hover:bg-purple-700"
                 >
-                  ✨ Analyze Weaknesses
+                  <Sparkles className="mr-2 h-4 w-4" /> Analyze Weaknesses
                 </Button>
               </div>
-            ) : (
-              <div className="animate-in fade-in space-y-3">
-                <div className="bg-purple-50 p-3 rounded border border-purple-100 text-sm italic text-gray-800">
+            )}
+
+            {/* STATE 2: Loading (Progress Bar) */}
+            {analyzing && (
+              <div className="space-y-4 py-4">
+                <p className="text-sm font-medium text-center text-purple-700 animate-pulse">
+                  Gemini AI is analyzing your answers...
+                </p>
+                <Progress value={progress} className="h-2 w-full bg-gray-100" />
+                <p className="text-xs text-center text-gray-400">
+                  This usually takes about 5-10 seconds.
+                </p>
+              </div>
+            )}
+
+            {/* STATE 3: Result Shown */}
+            {prediction && (
+              <div className="animate-in fade-in space-y-4">
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 text-sm italic text-gray-800 relative">
+                  <Sparkles className="h-4 w-4 text-purple-500 absolute top-2 right-2" />
                   "{prediction.feedback}"
                 </div>
-                <div className="flex justify-between items-center border-t pt-2">
-                  <span className="text-xs font-bold text-gray-500 uppercase">
-                    Focus On:
-                  </span>
-                  <span className="font-medium text-sm">
-                    {prediction.recommendedFocus}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-t pt-2">
-                  <span className="text-xs font-bold text-gray-500 uppercase">
-                    Predicted Next Score:
-                  </span>
-                  <span className="font-bold text-purple-600">
-                    {prediction.predictedScore}%
-                  </span>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="text-center p-2 bg-gray-50 rounded">
+                    <span className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      Focus On
+                    </span>
+                    <span className="font-medium text-sm block leading-tight">
+                      {prediction.recommendedFocus}
+                    </span>
+                  </div>
+                  <div className="text-center p-2 bg-gray-50 rounded">
+                    <span className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      Next Predicted
+                    </span>
+                    <span className="font-bold text-xl text-purple-600">
+                      {prediction.predictedScore}%
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
