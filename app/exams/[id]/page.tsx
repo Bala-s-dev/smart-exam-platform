@@ -82,12 +82,21 @@ export default function ExamDetailsPage({
       {user?.role === 'INSTRUCTOR' ? (
         <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
           <h3 className="font-semibold mb-2">Instructor Actions</h3>
-          <p className="text-sm mb-4">
-            Current Questions: <strong>{exam.questions.length}</strong>
-          </p>
-          <Button onClick={handleGenerateAI} disabled={generating}>
-            {generating ? 'Generating...' : '✨ Generate Questions with AI'}
-          </Button>
+          {/* ... existing generation button ... */}
+
+          <div className="flex gap-4 mt-4">
+            <Button onClick={handleGenerateAI} disabled={generating}>
+              {generating ? 'Generating...' : '✨ Generate Questions'}
+            </Button>
+
+            {/* NEW BUTTON */}
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/exams/${examId}/attempts`)}
+            >
+              View Student Results 👥
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="bg-green-50 p-6 rounded-lg border border-green-100 text-center">

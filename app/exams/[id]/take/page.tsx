@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AttemptTimer } from '@/components/attempt-timer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -88,6 +89,10 @@ export default function TakeExamPage({
         <CardHeader>
           <CardTitle className="text-lg">{question.text}</CardTitle>
         </CardHeader>
+        <AttemptTimer
+          durationMinutes={exam.durationMinutes}
+          onTimeUp={handleSubmit}
+        />
         <CardContent>
           <RadioGroup
             onValueChange={handleSelect}

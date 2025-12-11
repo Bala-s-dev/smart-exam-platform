@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { AnalyticsChart } from '@/components/analytics-chart';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -25,6 +26,14 @@ export default function Dashboard() {
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (!user) return <div className="p-8">Please log in.</div>;
+
+  // Format history for the chart (Student only)
+  const chartData =
+    user.role === 'STUDENT' && stats?.history
+      ? stats.history
+          .map((h: any) => ({ name: h.examTitle, score: h.score }))
+          .reverse()
+      : [];
 
   return (
     <div className="space-y-6">
@@ -62,35 +71,32 @@ export default function Dashboard() {
         {user.role === 'STUDENT' && (
           <Card>
             <CardHeader>
-              <CardTitle>Weakest Topic</CardTitle>
+              <CardTitle>Focus Topic</CardTitle>
             </CardHeader>
             <CardContent className="text-lg text-red-600 font-medium">
-              {stats?.weakTopics?.[0]?.name || 'None yet'}
+              {stats?.weakTopics?.[0]?.name || 'N/A'}
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/* Quick Actions / Recent */}
+      {/* Chart Section - Only visible for Students with data */}
+      {user.role === 'STUDENT' && (
+        <div className="mt-6">
+          <AnalyticsChart data={chartData} />
+        </div>
+      )}
+
+      {/* Action Links */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">
-          {user.role === 'INSTRUCTOR'
-            ? 'Recent Exams Created'
-            : 'Available Exams'}
+          {user.role === 'INSTRUCTOR' ? 'Your Exams' : 'Available Actions'}
         </h2>
-
-        <div className="grid gap-4">
-          {/* In a real app, you would map through an exam list here. 
-               For now, let's link to the Exams page. */}
-          <Link href="/exams">
-            <Button
-              variant="outline"
-              className="w-full h-24 text-lg border-dashed"
-            >
-              View All Exams &rarr;
-            </Button>
-          </Link>
-        </div>
+        <Link href="/exams">
+          <Button variant="outline" className="w-full h-16 text-lg">
+            View All Exams &rarr;
+          </Button>
+        </Link>
       </div>
     </div>
   );

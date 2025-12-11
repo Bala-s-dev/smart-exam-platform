@@ -49,7 +49,7 @@ export default function ResultsPage() {
         <Link href="/dashboard">
           <Button variant="outline">Back to Dashboard</Button>
         </Link>
-        <Link href={`/exams/${result.examId}/analytics`}>
+        <Link href={`/exams/${result.examId}/analytics?attemptId=${attemptId}`}>
           <Button>View Detailed Analytics</Button>
         </Link>
       </div>
