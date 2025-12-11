@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
-import { examSchema } from '@/lib/validators';
 
 export async function GET() {
   const session = await getSession();
@@ -12,14 +11,12 @@ export async function GET() {
 
   try {
     const whereClause =
-      role === 'INSTRUCTOR'
-        ? { instructorId: userId } // Instructors see their own
-        : { isPublished: true }; // Students see only published
+      role === 'INSTRUCTOR' ? { instructorId: userId } : { isPublished: true };
 
     const exams = await prisma.exam.findMany({
       where: whereClause,
       include: {
-        _count: { select: { questions: true } }, // Useful for UI badges
+        _count: { select: { questions: true } },
         topics: { include: { topic: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -42,29 +39,45 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const validated = examSchema.parse(body);
+    // Extract new fields
+    const { title, description, customTopic, durationMinutes, passingScore } =
+      body;
 
+    // 1. Handle Topic (Find existing or Create new)
+    let topicId;
+    const existingTopic = await prisma.topic.findUnique({
+      where: { name: customTopic },
+    });
+
+    if (existingTopic) {
+      topicId = existingTopic.id;
+    } else {
+      const newTopic = await prisma.topic.create({
+        data: { name: customTopic },
+      });
+      topicId = newTopic.id;
+    }
+
+    // 2. Create Exam
     const exam = await prisma.exam.create({
       data: {
-        title: validated.title,
-        description: validated.description,
-        durationMinutes: validated.durationMinutes,
-        passingScore: validated.passingScore,
-        isPublished: validated.isPublished,
+        title,
+        description, // Stores the syllabus
+        durationMinutes,
+        passingScore,
+        isPublished: true,
         instructorId: (session as any).id,
-        // Magic of Prisma: Connect existing topics via the join table
         topics: {
-          create: validated.topicIds.map((id) => ({
-            topic: { connect: { id } },
-          })),
+          create: [{ topic: { connect: { id: topicId } } }],
         },
       },
     });
 
     return NextResponse.json(exam, { status: 201 });
   } catch (error: any) {
+    console.error(error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create exam' },
+      { error: 'Failed to create exam' },
       { status: 400 }
     );
   }

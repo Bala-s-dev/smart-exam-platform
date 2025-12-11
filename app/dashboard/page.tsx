@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { AnalyticsChart } from '@/components/analytics-chart';
+import { BookOpen } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -84,6 +85,17 @@ export default function Dashboard() {
       {user.role === 'STUDENT' && (
         <div className="mt-6">
           <AnalyticsChart data={chartData} />
+        </div>
+      )}
+
+      {user.role === 'STUDENT' && (
+        <div className="col-span-1 md:col-span-3 mt-4">
+          <Link href="/results">
+            <Button className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 text-lg">
+              <BookOpen className="mr-2 h-5 w-5" /> View My Detailed Progress
+              Report
+            </Button>
+          </Link>
         </div>
       )}
 

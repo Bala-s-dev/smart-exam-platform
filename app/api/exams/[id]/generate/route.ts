@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { generateQuestionsAI } from '@/lib/ai';
-import { aiGenerateSchema } from '@/lib/validators';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -12,19 +11,32 @@ export async function POST(req: Request, { params }: Props) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // ✅ Await params
   const { id } = await params;
 
   try {
     const body = await req.json();
-    const { topic, count, difficulty } = aiGenerateSchema.parse(body);
+    const { topic, syllabus, count, difficulty } = body;
 
-    const aiQuestions = await generateQuestionsAI(topic, count, difficulty);
+    // 1. Generate using our lib function (Update logic below if needed)
+    // We pass the syllabus context into the 'topic' string for the AI function
+    // OR we update the AI function signature.
+    // For simplicity, let's append syllabus to the topic prompt passed to AI.
 
+    const contextPrompt = `Topic: ${topic}. Syllabus Context: ${
+      syllabus || 'General knowledge'
+    }`;
+
+    const aiQuestions = await generateQuestionsAI(
+      contextPrompt,
+      count,
+      difficulty
+    );
+
+    // 2. Save to DB
     const createPromises = aiQuestions.map((q: any) =>
       prisma.question.create({
         data: {
-          examId: id, // Use the awaited ID
+          examId: id,
           text: q.text,
           type: q.type,
           difficulty: q.difficulty,
