@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatDate } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft,
   TrendingUp,
