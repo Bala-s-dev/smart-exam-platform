@@ -9,6 +9,7 @@ import {
   CardContent,
   CardDescription,
 } from '@/components/ui/card';
+import { Clock, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,35 +60,58 @@ export default function ExamsListPage() {
               key={exam.id}
               className="block group"
             >
-              <Card className="h-full transition-shadow hover:shadow-md">
+              <Card className="h-full card-hover bg-white/50 border-border/60">
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="line-clamp-1 text-lg group-hover:text-blue-600">
+                  <div className="flex justify-between items-start mb-2">
+                    <CardTitle className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">
                       {exam.title}
                     </CardTitle>
                     {exam.isPublished ? (
-                      <Badge variant="default" className="bg-green-600">
-                        Published
+                      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none px-2 py-0.5 font-bold uppercase text-[10px]">
+                        Live
                       </Badge>
                     ) : (
-                      <Badge variant="secondary">Draft</Badge>
+                      <Badge
+                        variant="secondary"
+                        className="px-2 py-0.5 text-[10px] uppercase font-bold"
+                      >
+                        Draft
+                      </Badge>
                     )}
                   </div>
-                  <CardDescription className="line-clamp-2">
+                  <CardDescription className="text-muted-foreground text-sm line-clamp-2 leading-relaxed">
                     {exam.description || 'No description provided.'}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 mb-4">
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-1.5">
                     {exam.topics.map((t: any) => (
-                      <Badge key={t.topicId} variant="outline">
+                      <span
+                        key={t.topicId}
+                        className="px-2 py-0.5 bg-secondary rounded text-[11px] font-bold text-secondary-foreground uppercase"
+                      >
                         {t.topic.name}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
-                  <div className="flex justify-between text-sm text-gray-500 mt-auto">
-                    <span>⏱ {exam.durationMinutes}m</span>
-                    <span>Questions: {exam._count?.questions || 0}</span>
+                  <div className="flex justify-between items-center pt-4 border-t border-muted">
+                    <div className="flex gap-4 text-muted-foreground font-medium text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" /> {exam.durationMinutes}
+                        m
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <BookOpen className="h-3.5 w-3.5" />{' '}
+                        {exam._count?.questions || 0} Qs
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="font-bold text-primary p-0 h-auto"
+                    >
+                      View &rarr;
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

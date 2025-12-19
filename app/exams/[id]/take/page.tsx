@@ -72,72 +72,105 @@ export default function TakeExamPage({
   const isLastQuestion = currentQIndex === exam.questions.length - 1;
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4">
-      {/* Header & Progress */}
-      <div className="mb-6 space-y-2">
-        <div className="flex justify-between items-end">
-          <h1 className="text-xl font-bold">{exam.title}</h1>
-          <span className="text-sm text-gray-500">
-            Question {currentQIndex + 1} of {exam.questions.length}
-          </span>
+    <div className="max-w-3xl mx-auto py-8 px-4 space-y-8 animate-in fade-in duration-1000">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass p-4 rounded-2xl border bg-white/80 sticky top-4 z-50">
+        <div className="space-y-1">
+          <h1 className="text-lg font-bold tracking-tight line-clamp-1">
+            {exam.title}
+          </h1>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded">
+              Question {currentQIndex + 1} / {exam.questions.length}
+            </span>
+          </div>
         </div>
-        <Progress value={progress} className="h-2" />
-      </div>
-
-      {/* Question Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">{question.text}</CardTitle>
-        </CardHeader>
         <AttemptTimer
           durationMinutes={exam.durationMinutes}
           onTimeUp={handleSubmit}
         />
+      </div>
+
+      <Progress
+        value={progress}
+        className="h-2 rounded-full bg-secondary overflow-hidden shadow-inner"
+      />
+
+      <Card className="border-none shadow-2xl bg-white p-2 sm:p-6 overflow-hidden">
+        <CardHeader className="pb-8">
+          <CardTitle className="text-2xl font-bold leading-snug">
+            {question.text}
+          </CardTitle>
+        </CardHeader>
         <CardContent>
           <RadioGroup
             onValueChange={handleSelect}
             value={answers[question.id] || ''}
-            className="space-y-3"
+            className="grid gap-4"
           >
             {question.options.map((opt: any, idx: number) => (
-              <div
+              <Label
                 key={idx}
-                className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"
+                htmlFor={`opt-${idx}`}
+                className={`
+                flex items-center gap-4 p-5 rounded-xl border-2 transition-all cursor-pointer group
+                ${
+                  answers[question.id] === opt.text
+                    ? 'border-primary bg-primary/5 shadow-md'
+                    : 'border-muted hover:border-primary/30 hover:bg-muted/30'
+                }
+              `}
               >
-                <RadioGroupItem value={opt.text} id={`opt-${idx}`} />
-                <Label
-                  htmlFor={`opt-${idx}`}
-                  className="flex-grow cursor-pointer font-normal"
+                <RadioGroupItem
+                  value={opt.text}
+                  id={`opt-${idx}`}
+                  className="sr-only"
+                />
+                <div
+                  className={`
+                  w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
+                  ${
+                    answers[question.id] === opt.text
+                      ? 'border-primary bg-primary'
+                      : 'border-muted group-hover:border-primary/50'
+                  }
+                `}
                 >
+                  {answers[question.id] === opt.text && (
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  )}
+                </div>
+                <span className="text-lg font-medium leading-tight">
                   {opt.text}
-                </Label>
-              </div>
+                </span>
+              </Label>
             ))}
           </RadioGroup>
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center pt-4">
         <Button
-          variant="outline"
+          variant="ghost"
+          className="font-bold text-muted-foreground px-6"
           onClick={() => setCurrentQIndex((prev) => Math.max(0, prev - 1))}
           disabled={currentQIndex === 0}
         >
-          Previous
+          &larr; Previous
         </Button>
-
         {isLastQuestion ? (
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700"
             disabled={submitting}
+            className="bg-emerald-600 hover:bg-emerald-700 font-bold px-10 h-12 shadow-xl shadow-emerald-600/20"
           >
-            {submitting ? 'Submitting...' : 'Finish & Submit'}
+            {submitting ? 'Encrypting Answers...' : 'Submit Final Assessment'}
           </Button>
         ) : (
-          <Button onClick={() => setCurrentQIndex((prev) => prev + 1)}>
-            Next Question
+          <Button
+            onClick={() => setCurrentQIndex((prev) => prev + 1)}
+            className="font-bold px-10 h-12 shadow-lg shadow-primary/20"
+          >
+            Continue &rarr;
           </Button>
         )}
       </div>

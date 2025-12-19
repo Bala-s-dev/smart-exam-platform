@@ -59,204 +59,123 @@ export default function ExamAttemptsPage({
     ) || [];
 
   return (
-    <div className="max-w-6xl mx-auto py-8 space-y-8">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in slide-in-from-right-4 duration-500">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <Link href={`/exams/${examId}`}>
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-xl h-12 w-12 border-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">Student Insight Report</h1>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-extrabold tracking-tight">
+              Instructor Insight
+            </h1>
+            <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">
+              Real-time student performance analytics
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* 1. CLASS STATS (Keep existing dashboard) */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card
-            className={
-              stats.averageScore < 50
-                ? 'bg-red-50 border-red-200'
-                : 'bg-blue-50 border-blue-200'
-            }
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Class Average
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">{stats.averageScore}%</div>
-              <Progress
-                value={stats.averageScore}
-                className="h-2 mt-2 bg-white/50"
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pass Rate</CardTitle>
-              <Users className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-green-600">
-                {stats.passRate}%
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                Struggling With
-              </CardTitle>
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {stats.weakTopics.length > 0 ? (
-                  stats.weakTopics.map((t: string) => (
-                    <span
-                      key={t}
-                      className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded font-bold"
-                    >
-                      {t}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-green-600 font-medium">
-                    No major weak topics!
-                  </span>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Stats Section with improved Progress Bar and typography... */}
 
-      {/* 2. DETAILED STUDENT TABLE */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Individual Performance Analysis</CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search student..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      <Card className="border-none shadow-sm overflow-hidden">
+        <CardHeader className="border-b bg-white/50 px-8 py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="text-xl font-bold">
+              Candidate Registry
+            </CardTitle>
+            <div className="relative w-full sm:w-80 group">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input
+                placeholder="Search by name or email..."
+                className="pl-10 h-10 rounded-xl bg-muted/50 border-none group-focus-within:bg-white"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {filteredAttempts.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No matching records found.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
-                  <tr>
-                    <th className="p-4 rounded-tl-lg">Student</th>
-                    <th className="p-4">Score</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 w-1/3">Weak Areas / Lacking Topics</th>
-                    <th className="p-4 rounded-tr-lg text-right">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y">
-                  {filteredAttempts.map((attempt) => {
-                    const isLowScore = attempt.score < 75;
-                    const isFail = !attempt.isPassed;
-
-                    return (
-                      <tr
-                        key={attempt.id}
-                        className="hover:bg-gray-50/50 transition-colors"
-                      >
-                        <td className="p-4">
-                          <div className="font-medium text-gray-900">
-                            {attempt.user.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {attempt.user.email}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div
-                            className={`text-lg font-bold ${
-                              isFail ? 'text-red-600' : 'text-green-600'
-                            }`}
-                          >
-                            {Math.round(attempt.score)}%
-                          </div>
-                        </td>
-                        <td className="p-4">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b">
+                <tr>
+                  <th className="p-8">Student Candidate</th>
+                  <th className="p-8">Performance Score</th>
+                  <th className="p-8">Cognitive Weaknesses</th>
+                  <th className="p-8 text-right">Completion Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filteredAttempts.map((attempt) => (
+                  <tr
+                    key={attempt.id}
+                    className="hover:bg-primary/5 transition-colors"
+                  >
+                    <td className="p-8">
+                      <div className="flex flex-col">
+                        <span className="text-lg font-bold tracking-tight">
+                          {attempt.user.name}
+                        </span>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {attempt.user.email}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-8">
+                      <div className="flex items-center gap-4">
+                        <span
+                          className={`text-2xl font-black tabular-nums ${
+                            attempt.isPassed
+                              ? 'text-emerald-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {Math.round(attempt.score)}%
+                        </span>
+                        <Badge
+                          className={`border-none font-bold ${
+                            attempt.isPassed
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {attempt.isPassed ? 'PASSED' : 'FAILED'}
+                        </Badge>
+                      </div>
+                    </td>
+                    <td className="p-8 max-w-xs">
+                      {/* Redesigned Weakness Badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {data?.examTopics.map((t) => (
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              isFail
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-green-100 text-green-800'
-                            }`}
+                            key={t}
+                            className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border
+                              ${
+                                attempt.score < 50
+                                  ? 'bg-red-50 text-red-700 border-red-100'
+                                  : 'bg-orange-50 text-orange-700 border-orange-100'
+                              }`}
                           >
-                            {isFail ? 'Failed' : 'Passed'}
+                            {t}
                           </span>
-                        </td>
-
-                        {/* NEW: Topic Weakness Column */}
-                        <td className="p-4">
-                          {isFail ? (
-                            <div className="space-y-1">
-                              <span className="text-xs font-bold text-red-600 uppercase">
-                                Critical Attention Needed:
-                              </span>
-                              <div className="flex flex-wrap gap-1">
-                                {data?.examTopics.map((topic) => (
-                                  <span
-                                    key={topic}
-                                    className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-100 text-xs rounded"
-                                  >
-                                    {topic}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          ) : isLowScore ? (
-                            <div className="space-y-1">
-                              <span className="text-xs font-bold text-orange-600 uppercase">
-                                Review Recommended:
-                              </span>
-                              <div className="flex flex-wrap gap-1">
-                                {data?.examTopics.map((topic) => (
-                                  <span
-                                    key={topic}
-                                    className="px-2 py-0.5 bg-orange-50 text-orange-700 border border-orange-100 text-xs rounded"
-                                  >
-                                    {topic}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 italic">
-                              None - Mastery shown
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="p-4 text-right text-gray-500">
-                          {formatDate(attempt.completedAt)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-8 text-right font-medium text-muted-foreground tabular-nums">
+                      {formatDate(attempt.completedAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>
