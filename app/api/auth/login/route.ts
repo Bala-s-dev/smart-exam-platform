@@ -30,6 +30,7 @@ export async function POST(req: Request) {
     // Generate Token
     const token = await signToken({
       id: user.id,
+      name: user.name, // Add this line
       email: user.email,
       role: user.role,
     });

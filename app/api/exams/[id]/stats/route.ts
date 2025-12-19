@@ -28,6 +28,13 @@ export async function GET(req: Request, { params }: Props) {
     if (!exam)
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
 
+    if (exam.instructorId !== (session as any).id) {
+      return NextResponse.json(
+        { error: 'You do not have permission to view this exam’s stats' },
+        { status: 403 }
+      );
+    }
+
     const totalAttempts = exam.attempts.length;
 
     // 2. Calculate Average Percentage

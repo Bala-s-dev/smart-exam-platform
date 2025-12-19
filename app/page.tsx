@@ -1,86 +1,94 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Zap, Brain, TrendingUp } from 'lucide-react';
+import { Navbar } from '@/components/navbar';
+import { Sparkles, BarChart, ShieldCheck } from 'lucide-react';
 
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+
   return (
-    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-      {/* 1. SIMPLE HERO SECTION */}
-      <section className="flex-1 flex flex-col justify-center items-center text-center px-4 py-20 bg-white">
-        <h1 className="text-5xl font-extrabold tracking-tight mb-6 text-gray-900">
-          Smart Exams. <span className="text-blue-600">Real Results.</span>
-        </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mb-10">
-          The AI-powered platform where instructors generate tests in seconds
-          and students get predictive analytics to improve their grades.
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
 
-        <div className="flex gap-4">
-          <Link href="/register">
-            <Button
-              size="lg"
-              className="h-12 px-8 text-lg bg-blue-600 hover:bg-blue-700"
-            >
-              Get Started
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button size="lg" variant="outline" className="h-12 px-8 text-lg">
-              Log In
-            </Button>
-          </Link>
+      <main className="container mx-auto px-4 py-20">
+        <div className="text-center space-y-6 max-w-3xl mx-auto">
+          <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+            Master Your Exams with{' '}
+            <span className="text-blue-600">AI-Powered</span> Insights
+          </h1>
+          <p className="text-xl text-gray-600">
+            Generate smart exams, track your performance, and get personalized
+            feedback from Gemini AI to improve your scores.
+          </p>
+
+          <div className="flex justify-center gap-4 pt-4">
+            {loading ? (
+              /* Prevent layout shift while checking auth */
+              <Button size="lg" disabled className="px-8">
+                Loading...
+              </Button>
+            ) : user ? (
+              /* Show this if user is logged in */
+              <Link href="/dashboard">
+                <Button
+                  size="lg"
+                  className="px-8 bg-blue-600 hover:bg-blue-700"
+                >
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              /* Show this if user is logged out */
+              <>
+                <Link href="/register">
+                  <Button
+                    size="lg"
+                    className="px-8 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Get Started Free
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button size="lg" variant="outline" className="px-8">
+                    Login
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-      </section>
 
-      {/* 2. THREE KEY FEATURES */}
-      <section className="py-16 bg-gray-50 border-t">
-        <div className="container mx-auto px-4 grid md:grid-cols-3 gap-8">
-          <Card className="bg-white border-none shadow-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto bg-blue-100 p-3 rounded-full w-fit mb-2">
-                <Zap className="h-6 w-6 text-blue-600" />
-              </div>
-              <CardTitle>Instant Generation</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-gray-600">
-              Instructors just type a topic. AI builds the entire exam
-              instantly.
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-none shadow-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto bg-purple-100 p-3 rounded-full w-fit mb-2">
-                <Brain className="h-6 w-6 text-purple-600" />
-              </div>
-              <CardTitle>AI Prediction</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-gray-600">
-              We analyze your answers to predict your next score and fix weak
-              spots.
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border-none shadow-sm">
-            <CardHeader className="text-center">
-              <div className="mx-auto bg-green-100 p-3 rounded-full w-fit mb-2">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-              <CardTitle>Smart Analytics</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-gray-600">
-              Visual reports show exactly who attended and where the class is
-              struggling.
-            </CardContent>
-          </Card>
+        {/* Feature Highlights */}
+        <div className="grid md:grid-cols-3 gap-8 mt-24">
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+            <Sparkles className="h-10 w-10 text-blue-500 mb-4" />
+            <h3 className="text-xl font-bold mb-2">AI Generation</h3>
+            <p className="text-gray-500 text-sm">
+              Automatically create challenging MCQs from your study topics using
+              Google Gemini Pro.
+            </p>
+          </div>
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+            <BarChart className="h-10 w-10 text-purple-500 mb-4" />
+            <h3 className="text-xl font-bold mb-2">Smart Analytics</h3>
+            <p className="text-gray-500 text-sm">
+              Identify weak topics and receive score predictions based on your
+              past performance.
+            </p>
+          </div>
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+            <ShieldCheck className="h-10 w-10 text-green-500 mb-4" />
+            <h3 className="text-xl font-bold mb-2">Secure Testing</h3>
+            <p className="text-gray-500 text-sm">
+              Timed exam attempts with server-side grading and immediate,
+              detailed feedback.
+            </p>
+          </div>
         </div>
-      </section>
-
-      {/* 3. MINIMAL FOOTER */}
-      <footer className="py-6 text-center text-gray-400 text-sm bg-white border-t">
-        <p>© 2025 SmartExam AI Platform</p>
-      </footer>
+      </main>
     </div>
   );
 }
