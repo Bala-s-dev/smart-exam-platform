@@ -9,7 +9,6 @@ export async function generateQuestionsAI(
   difficulty: string
 ) {
   try {
-    // FIX: Use the specific model available in your list: 'gemini-2.5-flash'
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `

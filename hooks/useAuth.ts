@@ -16,8 +16,6 @@ export function useAuth() {
   }, []);
 
   const logout = async () => {
-    // In a real app, call an API to clear cookies.
-    // For now, we manually expire the cookie by setting it to past date or rely on browser.
     document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     window.location.href = '/login';
   };

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-// Fix Type Definition
 type Props = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, { params }: Props) {
@@ -10,7 +9,6 @@ export async function GET(req: Request, { params }: Props) {
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // ✅ Await params
   const { id } = await params;
 
   try {
@@ -40,7 +38,6 @@ export async function DELETE(req: Request, { params }: Props) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  // ✅ Await params
   const { id } = await params;
 
   try {

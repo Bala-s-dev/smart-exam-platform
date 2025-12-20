@@ -11,12 +11,12 @@ import { Loader2 } from 'lucide-react';
 export default function CreateExamPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState(''); // To show "Creating..." vs "Generating..."
+  const [status, setStatus] = useState(''); 
 
   const [formData, setFormData] = useState({
     title: '',
-    syllabus: '', // This maps to 'description'
-    topicName: '', // Now typable
+    syllabus: '', 
+    topicName: '', 
     questionCount: 5,
     durationMinutes: '30',
     passingScore: '50',
@@ -34,8 +34,8 @@ export default function CreateExamPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
-          description: formData.syllabus, // Use syllabus as description
-          customTopic: formData.topicName, // Send the typed name
+          description: formData.syllabus, 
+          customTopic: formData.topicName, 
           durationMinutes: parseInt(formData.durationMinutes),
           passingScore: parseInt(formData.passingScore),
         }),
@@ -52,7 +52,7 @@ export default function CreateExamPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           topic: formData.topicName,
-          syllabus: formData.syllabus, // Pass syllabus context
+          syllabus: formData.syllabus, 
           count: formData.questionCount,
           difficulty: 'MEDIUM',
         }),

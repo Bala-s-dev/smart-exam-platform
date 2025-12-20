@@ -10,7 +10,6 @@ export async function GET(req: Request, { params }: Props) {
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // ✅ Await params
   const { id } = await params;
 
   const questions = await prisma.question.findMany({
@@ -34,7 +33,6 @@ export async function POST(req: Request, { params }: Props) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // ✅ Await params
   const { id } = await params;
 
   try {

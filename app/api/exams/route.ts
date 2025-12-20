@@ -39,7 +39,6 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    // Extract new fields
     const { title, description, customTopic, durationMinutes, passingScore } =
       body;
 
@@ -62,7 +61,7 @@ export async function POST(req: Request) {
     const exam = await prisma.exam.create({
       data: {
         title,
-        description, // Stores the syllabus
+        description, 
         durationMinutes,
         passingScore,
         isPublished: true,

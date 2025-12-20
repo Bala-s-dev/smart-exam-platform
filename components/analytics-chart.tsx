@@ -12,7 +12,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function AnalyticsChart({ data }: { data: any[] }) {
-  // data format: [{ name: "Exam 1", score: 85 }, { name: "Exam 2", score: 60 }]
 
   if (!data || data.length === 0) {
     return (
