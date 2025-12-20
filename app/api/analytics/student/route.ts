@@ -48,6 +48,7 @@ export async function GET() {
       avgScore: Number(avgScore),
       weakTopics,
       history: attempts.map((a) => ({
+        id: a.id,
         examTitle: a.exam.title,
         score: a.score,
         date: a.completedAt,

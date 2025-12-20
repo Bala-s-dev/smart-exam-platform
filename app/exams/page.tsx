@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Clock, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -28,7 +29,16 @@ export default function ExamsListPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-center">Loading exams...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto py-20 space-y-4 flex flex-col items-center">
+        <p className="text-muted-foreground font-medium animate-pulse">
+          Syncing data...
+        </p>
+        <Progress value={40} className="w-64 h-2 animate-bounce" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto py-8 space-y-6">

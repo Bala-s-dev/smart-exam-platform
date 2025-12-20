@@ -7,7 +7,15 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Users, Clock, Target, ArrowLeft } from 'lucide-react';
+import { Progress } from '@/components/ui/progress'; // Added for loading state
+import {
+  Sparkles,
+  Users,
+  Clock,
+  Target,
+  ArrowLeft,
+  CheckCircle2,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function ExamDetailsPage({
@@ -19,6 +27,7 @@ export default function ExamDetailsPage({
   const { user } = useAuth();
   const [exam, setExam] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
+  const [success, setSuccess] = useState(false); // New success state
   const [examId, setExamId] = useState<string>('');
 
   useEffect(() => {
@@ -32,6 +41,7 @@ export default function ExamDetailsPage({
 
   const handleGenerateAI = async () => {
     setGenerating(true);
+    setSuccess(false);
     try {
       const res = await fetch(`/api/exams/${examId}/generate`, {
         method: 'POST',
@@ -42,7 +52,14 @@ export default function ExamDetailsPage({
           difficulty: 'MEDIUM',
         }),
       });
-      if (res.ok) window.location.reload();
+
+      if (res.ok) {
+        setSuccess(true);
+        // Delay reload so user can see the success message
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        throw new Error('Failed to generate');
+      }
     } catch (e) {
       alert('Error generating questions');
     } finally {
@@ -64,8 +81,11 @@ export default function ExamDetailsPage({
 
   if (!exam)
     return (
-      <div className="p-8 text-center animate-pulse text-muted-foreground">
-        Loading Exam Details...
+      <div className="max-w-4xl mx-auto py-20 space-y-4 flex flex-col items-center">
+        <Progress value={40} className="w-64 h-2 animate-pulse" />
+        <p className="text-muted-foreground font-medium animate-pulse">
+          Loading Exam Details...
+        </p>
       </div>
     );
 
@@ -77,6 +97,16 @@ export default function ExamDetailsPage({
       >
         <ArrowLeft className="h-4 w-4" /> Back to Library
       </Link>
+
+      {/* SUCCESS MESSAGE BANNER */}
+      {success && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          <span className="font-bold text-sm">
+            Questions generated successfully! Refreshing exam content...
+          </span>
+        </div>
+      )}
 
       <div className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight">{exam.title}</h1>
@@ -125,11 +155,15 @@ export default function ExamDetailsPage({
               <CardContent className="space-y-3">
                 <Button
                   onClick={handleGenerateAI}
-                  disabled={generating}
-                  className="w-full bg-primary hover:bg-primary/90 font-bold gap-2 h-11"
+                  disabled={generating || success}
+                  className="w-full bg-primary hover:bg-primary/90 font-bold gap-2 h-11 shadow-lg shadow-primary/20"
                 >
                   <Sparkles className="h-4 w-4" />{' '}
-                  {generating ? 'Processing...' : 'Auto-Gen Questions'}
+                  {generating
+                    ? 'Processing...'
+                    : success
+                    ? 'Completed'
+                    : 'Auto-Gen Questions'}
                 </Button>
                 <Button
                   variant="outline"
