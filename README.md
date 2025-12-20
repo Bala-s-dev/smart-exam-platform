@@ -2,6 +2,16 @@
 
 An AI-powered EdTech platform built with Next.js 16, TypeScript, Tailwind CSS, Prisma, and Google Gemini. This platform streamlines the exam lifecycle, from AI-assisted creation to performance prediction.
 
+# Live link : https://smart-exam-platform.vercel.app/
+
+# Test Account for the website
+# Student Account for testing:
+   * Email id : student@gmail.com or student1@gmail.com
+   * password : 123456
+# Instructor Account for testing:
+   * Email id : Instructor@gmail.com
+   * password : 123456
+
 ## 🚀 Key Features
 
 * **Role-Based Access Control**: Secure separation between Instructors (exam creators) and Students (exam takers).
@@ -76,3 +86,11 @@ An AI-powered EdTech platform built with Next.js 16, TypeScript, Tailwind CSS, P
 * `npm run build`: Generates Prisma client and builds the application for production.
 * `npm run start`: Starts the production server.
 * `npm run lint`: Runs ESLint to identify code quality issues.
+
+# Test Account for the website
+# Student Account for testing:
+   * Email id : student@gmail.com or student1@gmail.com
+   * password : 123456
+# Instructor Account for testing:
+   * Email id : Instructor@gmail.com
+   * password : 123456
