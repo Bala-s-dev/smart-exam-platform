@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Clock, BookOpen, Plus, Search, Loader2 } from 'lucide-react';
+import { Clock, BookOpen, Plus, Search, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ExamsListPage() {
@@ -39,6 +39,11 @@ export default function ExamsListPage() {
     <div className="max-w-5xl mx-auto space-y-7">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 anim-up">
+        <Link href="/dashboard" className="text-sm font-medium text-primary">
+          <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-[13px] text-muted-foreground hover:text-foreground h-8 px-3">
+            <ArrowLeft size={15} /> Back to dashboard
+          </Button>
+        </Link>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             {user?.role === 'INSTRUCTOR' ? 'My exams' : 'Exam library'}
@@ -51,13 +56,17 @@ export default function ExamsListPage() {
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Search */}
-          <div className="relative flex-1 sm:flex-initial">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative">
             <input
+              type="text"
+              placeholder="Search students..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search exams…"
-              className="input-base pl-9 text-[13px] h-9 w-full sm:w-56"
+              className="pl-8 pr-3 h-9 mr-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            />
+            <Search
+              size={14}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
           </div>
           {user?.role === 'INSTRUCTOR' && (
@@ -76,18 +85,30 @@ export default function ExamsListPage() {
       {/* Grid */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-5 text-center border border-dashed border-border rounded-2xl">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'oklch(0.93 0.01 255)' }}>
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: 'oklch(0.93 0.01 255)' }}
+          >
             <BookOpen size={22} className="text-muted-foreground" />
           </div>
           <div>
-            <p className="font-semibold text-[16px]">{search ? 'No matching exams' : 'No exams yet'}</p>
+            <p className="font-semibold text-[16px]">
+              {search ? 'No matching exams' : 'No exams yet'}
+            </p>
             <p className="text-muted-foreground text-[14px] mt-1">
-              {search ? 'Try adjusting your search query.' : user?.role === 'INSTRUCTOR' ? 'Create your first exam to get started.' : 'Check back later for available assessments.'}
+              {search
+                ? 'Try adjusting your search query.'
+                : user?.role === 'INSTRUCTOR'
+                  ? 'Create your first exam to get started.'
+                  : 'Check back later for available assessments.'}
             </p>
           </div>
           {!search && user?.role === 'INSTRUCTOR' && (
             <Link href="/exams/create">
-              <Button className="rounded-xl text-[13px]" style={{ background: 'oklch(0.52 0.22 264)' }}>
+              <Button
+                className="rounded-xl text-[13px]"
+                style={{ background: 'oklch(0.52 0.22 264)' }}
+              >
                 Create your first exam
               </Button>
             </Link>
@@ -96,17 +117,25 @@ export default function ExamsListPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 anim-up-1">
           {filtered.map((exam) => (
-            <Link href={`/exams/${exam.id}`} key={exam.id} className="block group">
+            <Link
+              href={`/exams/${exam.id}`}
+              key={exam.id}
+              className="block group"
+            >
               <div className="card-base card-hover p-5 h-full flex flex-col gap-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-[15px] leading-snug group-hover:text-primary transition-colors line-clamp-2 flex-1" style={{ '--tw-text-opacity': 1 } as any}>
+                  <h3
+                    className="font-semibold text-[15px] leading-snug group-hover:text-primary transition-colors line-clamp-2 flex-1"
+                    style={{ '--tw-text-opacity': 1 } as any}
+                  >
                     {exam.title}
                   </h3>
-                  {exam.isPublished
-                    ? <span className="badge-live shrink-0">Live</span>
-                    : <span className="badge-draft shrink-0">Draft</span>
-                  }
+                  {exam.isPublished ? (
+                    <span className="badge-live shrink-0">Live</span>
+                  ) : (
+                    <span className="badge-draft shrink-0">Draft</span>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -121,7 +150,10 @@ export default function ExamsListPage() {
                       <span
                         key={t.topicId}
                         className="px-2 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wide"
-                        style={{ background: 'oklch(0.93 0.04 262)', color: 'oklch(0.40 0.15 264)' }}
+                        style={{
+                          background: 'oklch(0.93 0.04 262)',
+                          color: 'oklch(0.40 0.15 264)',
+                        }}
                       >
                         {t.topic.name}
                       </span>
@@ -144,7 +176,10 @@ export default function ExamsListPage() {
                       <BookOpen size={11} /> {exam._count?.questions ?? 0}q
                     </span>
                   </div>
-                  <span className="font-semibold text-[12px]" style={{ color: 'oklch(0.52 0.22 264)' }}>
+                  <span
+                    className="font-semibold text-[12px]"
+                    style={{ color: 'oklch(0.52 0.22 264)' }}
+                  >
                     View →
                   </span>
                 </div>

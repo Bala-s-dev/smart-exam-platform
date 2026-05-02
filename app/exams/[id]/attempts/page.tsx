@@ -49,16 +49,13 @@ export default function ExamAttemptsPage({ params }: { params: Promise<{ id: str
   return (
     <div className="max-w-6xl mx-auto space-y-7 anim-up">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <Link href={`/exams/${examId}`}>
-          <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-[13px] text-muted-foreground hover:text-foreground h-8 px-3">
-            <ArrowLeft size={15} /> Back to exam
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl">
+            <ArrowLeft size={16} />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Student results</h1>
-          <p className="text-muted-foreground text-[14px]">Real-time performance analytics for this exam.</p>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Exam Attempts</h1>
       </div>
 
       {/* Summary stats */}
@@ -82,17 +79,18 @@ export default function ExamAttemptsPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Table card */}
-      <div className="card-base overflow-hidden anim-up-2">
-        <div className="px-6 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2 className="font-semibold text-[15px]">Candidate registry</h2>
-          <div className="relative w-full sm:w-60">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <div className="card-base anim-up-2">
+        <div className="flex items-center justify-between mb-5 p-3">
+          <h2 className="text-lg font-semibold tracking-tight pl-3">Attempt details</h2>
+          <div className="relative">
             <input
-              placeholder="Search students…"
-              className="input-base pl-9 text-[13px] h-9 w-full"
+              type="text"
+              placeholder="Search students..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 pr-3 h-9 mr-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             />
+            <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
           </div>
         </div>
 

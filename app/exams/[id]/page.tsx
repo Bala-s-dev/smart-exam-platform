@@ -37,7 +37,11 @@ export default function ExamDetailsPage({ params }: { params: Promise<{ id: stri
       });
       if (res.ok) {
         setSuccess(true);
-        setTimeout(() => window.location.reload(), 2000);
+
+        setTimeout(() => {
+          router.push('/exams');
+          router.refresh();
+        }, 1500);
       } else throw new Error();
     } catch {
       alert('Error generating questions');

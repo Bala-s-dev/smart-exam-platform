@@ -53,7 +53,7 @@ export default function LandingPage() {
       <section className="relative pt-16 pb-20 md:pt-24 md:pb-32">
         <div className="absolute inset-0 dot-pattern opacity-50 -z-10" />
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] -z-10 rounded-full blur-[120px] opacity-10"
+          className="absolute top-0 left-1/2 -translate-x-1/2 h-[400px] -z-10 rounded-full blur-[120px] opacity-10"
           style={{ background: 'oklch(0.52 0.22 264)' }}
         />
 
