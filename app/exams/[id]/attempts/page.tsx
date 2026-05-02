@@ -1,31 +1,14 @@
+/* app/exams/[id]/attempts/page.tsx */
 'use client';
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { formatDate } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import {
-  ArrowLeft,
-  TrendingUp,
-  Users,
-  AlertTriangle,
-  Search,
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { ArrowLeft, Search, Users, Loader2, CheckCircle2, XCircle, BarChart3, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ExamAttemptsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const [data, setData] = useState<{
-    attempts: any[];
-    examTopics: string[];
-  } | null>(null);
-  const [stats, setStats] = useState<any>(null);
+export default function ExamAttemptsPage({ params }: { params: Promise<{ id: string }> }) {
+  const [data, setData] = useState<{ attempts: any[]; examTopics: string[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [examId, setExamId] = useState('');
   const [search, setSearch] = useState('');
@@ -33,143 +16,144 @@ export default function ExamAttemptsPage({
   useEffect(() => {
     params.then((p) => {
       setExamId(p.id);
-
-      // Fetch 1: Students & Topics
-      fetch(`/api/exams/${p.id}/attempts`)
-        .then((res) => res.json())
-        .then((json) => {
-          if (json.attempts) setData(json);
-        });
-
-      // Fetch 2: Class Stats
-      fetch(`/api/exams/${p.id}/stats`)
-        .then((res) => res.json())
-        .then((json) => setStats(json))
-        .finally(() => setLoading(false));
+      Promise.all([
+        fetch(`/api/exams/${p.id}/attempts`).then((r) => r.json()),
+        fetch(`/api/exams/${p.id}/stats`).then((r) => r.json()),
+      ]).then(([attemptsJson]) => {
+        if (attemptsJson.attempts) setData(attemptsJson);
+        setLoading(false);
+      });
     });
   }, [params]);
 
-  if (loading) return <div className="p-10 text-center">Loading Report...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin" />
+        <span className="text-[14px] font-medium">Loading report…</span>
+      </div>
+    );
+  }
 
-  // Filter students based on search
-  const filteredAttempts =
-    data?.attempts.filter(
-      (a) =>
-        a.user.name.toLowerCase().includes(search.toLowerCase()) ||
-        a.user.email.toLowerCase().includes(search.toLowerCase())
-    ) || [];
+  const filteredAttempts = data?.attempts.filter((a) =>
+    a.user.name.toLowerCase().includes(search.toLowerCase()) ||
+    a.user.email.toLowerCase().includes(search.toLowerCase())
+  ) || [];
+
+  const passCount = filteredAttempts.filter((a) => a.isPassed).length;
+  const avgScore = filteredAttempts.length > 0
+    ? Math.round(filteredAttempts.reduce((sum, a) => sum + a.score, 0) / filteredAttempts.length)
+    : 0;
+  const passRate = filteredAttempts.length ? Math.round((passCount / filteredAttempts.length) * 100) : 0;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 py-6 animate-in slide-in-from-right-4 duration-500">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href={`/exams/${examId}`}>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-xl h-12 w-12 border-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div className="space-y-1">
-            <h1 className="text-4xl font-extrabold tracking-tight">
-              Instructor Insight
-            </h1>
-            <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">
-              Real-time student performance analytics
-            </p>
-          </div>
+    <div className="max-w-6xl mx-auto space-y-7 anim-up">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Link href={`/exams/${examId}`}>
+          <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-[13px] text-muted-foreground hover:text-foreground h-8 px-3">
+            <ArrowLeft size={15} /> Back to exam
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Student results</h1>
+          <p className="text-muted-foreground text-[14px]">Real-time performance analytics for this exam.</p>
         </div>
       </div>
 
-      {/* Stats Section with improved Progress Bar and typography... */}
-
-      <Card className="border-none shadow-sm overflow-hidden">
-        <CardHeader className="border-b bg-white/50 px-8 py-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle className="text-xl font-bold">
-              Candidate Registry
-            </CardTitle>
-            <div className="relative w-full sm:w-80 group">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                placeholder="Search by name or email..."
-                className="pl-10 h-10 rounded-xl bg-muted/50 border-none group-focus-within:bg-white"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 anim-up-1">
+        {[
+          { label: 'Total attempts', value: filteredAttempts.length, icon: Users, color: 'oklch(0.52 0.22 264)', bg: 'oklch(0.93 0.04 262)' },
+          { label: 'Pass rate', value: filteredAttempts.length ? `${passRate}%` : '—', icon: TrendingUp, color: 'oklch(0.50 0.14 155)', bg: 'oklch(0.94 0.06 155)' },
+          { label: 'Average score', value: `${avgScore}%`, icon: BarChart3, color: 'oklch(0.55 0.2 300)', bg: 'oklch(0.94 0.04 300)' },
+          { label: 'Passed', value: passCount, icon: CheckCircle2, color: 'oklch(0.50 0.14 155)', bg: 'oklch(0.94 0.06 155)' },
+        ].map((item) => (
+          <div key={item.label} className="card-base p-5 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: item.bg }}>
+              <item.icon size={16} style={{ color: item.color }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</p>
+              <p className="text-[20px] font-bold tabular-nums">{item.value}</p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        ))}
+      </div>
+
+      {/* Table card */}
+      <div className="card-base overflow-hidden anim-up-2">
+        <div className="px-6 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="font-semibold text-[15px]">Candidate registry</h2>
+          <div className="relative w-full sm:w-60">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              placeholder="Search students…"
+              className="input-base pl-9 text-[13px] h-9 w-full"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {filteredAttempts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b">
-                <tr>
-                  <th className="p-8">Student Candidate</th>
-                  <th className="p-8">Performance Score</th>
-                  <th className="p-8">Cognitive Weaknesses</th>
-                  <th className="p-8 text-right">Completion Date</th>
+              <thead>
+                <tr style={{ background: 'oklch(0.97 0.005 255)' }}>
+                  {['Student', 'Score', 'Topics', 'Completed'].map((h) => (
+                    <th key={h} className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-border">
                 {filteredAttempts.map((attempt) => (
-                  <tr
-                    key={attempt.id}
-                    className="hover:bg-primary/5 transition-colors"
-                  >
-                    <td className="p-8">
-                      <div className="flex flex-col">
-                        <span className="text-lg font-bold tracking-tight">
-                          {attempt.user.name}
-                        </span>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {attempt.user.email}
-                        </span>
+                  <tr key={attempt.id} className="trow">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                          style={{ background: attempt.isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}
+                        >
+                          {attempt.user.name?.[0]?.toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-semibold">{attempt.user.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{attempt.user.email}</p>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-8">
-                      <div className="flex items-center gap-4">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
                         <span
-                          className={`text-2xl font-black tabular-nums ${
-                            attempt.isPassed
-                              ? 'text-emerald-600'
-                              : 'text-red-600'
-                          }`}
+                          className="text-[18px] font-bold tabular-nums"
+                          style={{ color: attempt.isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}
                         >
                           {Math.round(attempt.score)}%
                         </span>
-                        <Badge
-                          className={`border-none font-bold ${
-                            attempt.isPassed
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          {attempt.isPassed ? 'PASSED' : 'FAILED'}
-                        </Badge>
+                        <div className="flex items-center gap-1" style={{ color: attempt.isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}>
+                          {attempt.isPassed ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                          <span className="text-[11px] font-semibold">{attempt.isPassed ? 'Pass' : 'Fail'}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-8 max-w-xs">
-                      {/* Redesigned Weakness Badges */}
+                    <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1.5">
                         {data?.examTopics.map((t) => (
                           <span
                             key={t}
-                            className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border
-                              ${
-                                attempt.score < 50
-                                  ? 'bg-red-50 text-red-700 border-red-100'
-                                  : 'bg-orange-50 text-orange-700 border-orange-100'
-                              }`}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold"
+                            style={{
+                              background: attempt.score < 50 ? 'oklch(0.96 0.05 25)' : 'oklch(0.93 0.04 262)',
+                              color: attempt.score < 50 ? 'oklch(0.55 0.2 25)' : 'oklch(0.40 0.15 264)',
+                            }}
                           >
                             {t}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="p-8 text-right font-medium text-muted-foreground tabular-nums">
+                    <td className="px-6 py-4 text-[13px] text-muted-foreground font-medium whitespace-nowrap">
                       {formatDate(attempt.completedAt)}
                     </td>
                   </tr>
@@ -177,8 +161,15 @@ export default function ExamAttemptsPage({
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+            <Users size={28} className="text-muted-foreground opacity-40" />
+            <p className="font-medium text-muted-foreground text-[14px]">
+              {search ? 'No students match your search.' : 'No attempts recorded yet.'}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

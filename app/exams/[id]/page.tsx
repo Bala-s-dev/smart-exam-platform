@@ -5,30 +5,17 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress'; // Added for loading state
-import {
-  Sparkles,
-  Users,
-  Clock,
-  Target,
-  ArrowLeft,
-  CheckCircle2,
-} from 'lucide-react';
+import { Sparkles, Users, Clock, Target, ArrowLeft, CheckCircle2, Loader2, BookOpen, Play } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ExamDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function ExamDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { user } = useAuth();
   const [exam, setExam] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
-  const [success, setSuccess] = useState(false); // New success state
+  const [success, setSuccess] = useState(false);
   const [examId, setExamId] = useState<string>('');
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     params.then((p) => {
@@ -46,21 +33,13 @@ export default function ExamDetailsPage({
       const res = await fetch(`/api/exams/${examId}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: exam.topics[0]?.topic.name || 'General',
-          count: 5,
-          difficulty: 'MEDIUM',
-        }),
+        body: JSON.stringify({ topic: exam.topics[0]?.topic.name || 'General', count: 5, difficulty: 'MEDIUM' }),
       });
-
       if (res.ok) {
         setSuccess(true);
-        // Delay reload so user can see the success message
         setTimeout(() => window.location.reload(), 2000);
-      } else {
-        throw new Error('Failed to generate');
-      }
-    } catch (e) {
+      } else throw new Error();
+    } catch {
       alert('Error generating questions');
     } finally {
       setGenerating(false);
@@ -68,132 +47,134 @@ export default function ExamDetailsPage({
   };
 
   const handleStartExam = async () => {
-    const res = await fetch('/api/attempts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ examId }),
-    });
-    if (res.ok) {
-      const attempt = await res.json();
-      router.push(`/exams/${examId}/take?attemptId=${attempt.id}`);
+    setStarting(true);
+    try {
+      const res = await fetch('/api/attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examId }),
+      });
+      if (res.ok) {
+        const attempt = await res.json();
+        router.push(`/exams/${examId}/take?attemptId=${attempt.id}`);
+      }
+    } catch {
+      setStarting(false);
     }
   };
 
-  if (!exam)
+  if (!exam) {
     return (
-      <div className="max-w-4xl mx-auto py-20 space-y-4 flex flex-col items-center">
-        <Progress value={40} className="w-64 h-2 animate-pulse" />
-        <p className="text-muted-foreground font-medium animate-pulse">
-          Loading Exam Details...
-        </p>
+      <div className="flex items-center justify-center h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin" />
+        <span className="text-[14px] font-medium">Loading exam…</span>
       </div>
     );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <Link
-        href="/exams"
-        className="inline-flex items-center text-sm font-bold text-muted-foreground hover:text-primary transition-colors gap-2"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to Library
+    <div className="max-w-4xl mx-auto space-y-7 anim-up">
+      {/* Back */}
+      <Link href="/exams" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft size={15} /> Back to library
       </Link>
 
-      {/* SUCCESS MESSAGE BANNER */}
+      {/* Success banner */}
       {success && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          <span className="font-bold text-sm">
-            Questions generated successfully! Refreshing exam content...
-          </span>
+        <div className="flex items-center gap-3 p-4 rounded-xl text-[14px] font-medium anim-up"
+          style={{ background: 'oklch(0.94 0.06 155)', color: 'oklch(0.40 0.14 155)', border: '1px solid oklch(0.87 0.09 155)' }}
+        >
+          <CheckCircle2 size={17} />
+          Questions generated successfully! Refreshing…
         </div>
       )}
 
-      <div className="space-y-4">
-        <h1 className="text-4xl font-extrabold tracking-tight">{exam.title}</h1>
-        <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
-          {exam.description}
+      {/* Hero */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {exam.isPublished
+            ? <span className="badge-live">Live</span>
+            : <span className="badge-draft">Draft</span>
+          }
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{exam.title}</h1>
+        <p className="text-muted-foreground text-[16px] leading-relaxed max-w-2xl">
+          {exam.description || 'No description provided.'}
         </p>
-        <div className="flex flex-wrap gap-4 pt-2">
-          <Badge variant="secondary" className="px-3 py-1 gap-2">
-            <Clock className="h-4 w-4" /> {exam.durationMinutes} Minutes
-          </Badge>
-          <Badge variant="secondary" className="px-3 py-1 gap-2">
-            <Target className="h-4 w-4" /> Passing Score: {exam.passingScore}%
-          </Badge>
+        <div className="flex flex-wrap gap-3 pt-1">
+          <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground px-3 py-1.5 rounded-lg bg-secondary border border-border">
+            <Clock size={14} /> {exam.durationMinutes} minutes
+          </div>
+          <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground px-3 py-1.5 rounded-lg bg-secondary border border-border">
+            <Target size={14} /> Pass: {exam.passingScore}%
+          </div>
+          <div className="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground px-3 py-1.5 rounded-lg bg-secondary border border-border">
+            <BookOpen size={14} /> {exam._count?.questions ?? 0} questions
+          </div>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          <Card className="border-none shadow-sm bg-white/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold">
-                Curriculum Topics
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
+      <div className="grid md:grid-cols-3 gap-5">
+        {/* Topics */}
+        <div className="md:col-span-2 card-base p-6 space-y-4">
+          <h2 className="font-semibold text-[16px]">Curriculum topics</h2>
+          {exam.topics?.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
               {exam.topics.map((t: any) => (
                 <span
                   key={t.topicId}
-                  className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-bold uppercase tracking-wide border border-primary/20"
+                  className="px-3 py-1 rounded-full text-[13px] font-semibold"
+                  style={{ background: 'oklch(0.93 0.04 262)', color: 'oklch(0.40 0.15 264)', border: '1px solid oklch(0.87 0.06 264)' }}
                 >
                   {t.topic.name}
                 </span>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-[14px]">No topics assigned.</p>
+          )}
         </div>
 
-        <div className="space-y-4">
+        {/* Action panel */}
+        <div>
           {user?.role === 'INSTRUCTOR' ? (
-            <Card className="border-primary/20 bg-primary/5 shadow-xl shadow-primary/5">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">
-                  Management Console
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  onClick={handleGenerateAI}
-                  disabled={generating || success}
-                  className="w-full bg-primary hover:bg-primary/90 font-bold gap-2 h-11 shadow-lg shadow-primary/20"
-                >
-                  <Sparkles className="h-4 w-4" />{' '}
-                  {generating
-                    ? 'Processing...'
-                    : success
-                    ? 'Completed'
-                    : 'Auto-Gen Questions'}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full border-2 font-bold h-11 gap-2"
-                  onClick={() => router.push(`/exams/${examId}/attempts`)}
-                >
-                  <Users className="h-4 w-4" /> Student Insights
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="card-base p-5 space-y-3">
+              <h2 className="font-semibold text-[15px]">Management</h2>
+              <Button
+                onClick={handleGenerateAI}
+                disabled={generating || success}
+                className="w-full h-10 text-[13px] font-semibold rounded-xl gap-2"
+                style={{ background: 'oklch(0.52 0.22 264)' }}
+              >
+                {generating ? <><Loader2 size={14} className="animate-spin" /> Generating…</> :
+                 success ? <><CheckCircle2 size={14} /> Generated!</> :
+                 <><Sparkles size={14} /> Auto-generate questions</>}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-10 text-[13px] font-semibold rounded-xl gap-2"
+                onClick={() => router.push(`/exams/${examId}/attempts`)}
+              >
+                <Users size={14} /> View student results
+              </Button>
+            </div>
           ) : (
-            <Card className="border-emerald-200 bg-emerald-50/50 shadow-xl shadow-emerald-500/5">
-              <CardHeader className="text-center">
-                <CardTitle className="text-lg font-bold">
-                  Ready to Start?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  size="lg"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold text-lg h-14 shadow-lg shadow-emerald-600/20"
-                  onClick={handleStartExam}
-                >
-                  Launch Exam Environment
-                </Button>
-                <p className="text-[10px] text-center mt-4 uppercase font-bold tracking-widest text-emerald-700/60">
-                  Timer starts immediately on click
-                </p>
-              </CardContent>
-            </Card>
+            <div className="card-base p-5 space-y-4">
+              <div className="space-y-1">
+                <h2 className="font-semibold text-[16px]">Ready to begin?</h2>
+                <p className="text-[13px] text-muted-foreground">Timer starts immediately upon clicking.</p>
+              </div>
+              <Button
+                size="lg"
+                onClick={handleStartExam}
+                disabled={starting}
+                className="w-full h-12 text-[15px] font-semibold rounded-xl gap-2"
+                style={{ background: 'oklch(0.50 0.14 155)', color: 'white' }}
+              >
+                {starting ? <><Loader2 size={16} className="animate-spin" /> Starting…</> :
+                 <><Play size={16} /> Start exam</>}
+              </Button>
+            </div>
           )}
         </div>
       </div>

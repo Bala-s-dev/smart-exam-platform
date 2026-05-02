@@ -1,28 +1,20 @@
+/* app/exams/[id]/analytics/page.tsx */
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress'; // Ensure this is imported
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Target, Brain, TrendingUp, CheckCircle2, XCircle } from 'lucide-react';
 
-export default function ExamAnalyticsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function ExamAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
   const searchParams = useSearchParams();
   const urlAttemptId = searchParams.get('attemptId');
-
   const [examId, setExamId] = useState<string>('');
   const [attempt, setAttempt] = useState<any>(null);
   const [prediction, setPrediction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // NEW: States for AI Loading Animation
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -39,177 +31,192 @@ export default function ExamAnalyticsPage({
       if (!targetAttemptId) {
         const res = await fetch('/api/attempts');
         const history = await res.json();
-        const latest = history.find(
-          (h: any) => h.examId === eId && h.completedAt
-        );
-
+        const latest = history.find((h: any) => h.examId === eId && h.completedAt);
         if (latest) targetAttemptId = latest.id;
-        else {
-          setError('No completed attempts found for this exam.');
-          setLoading(false);
-          return;
-        }
+        else { setError('No completed attempts found for this exam.'); setLoading(false); return; }
       }
-
       if (targetAttemptId) {
         const res = await fetch(`/api/attempts/${targetAttemptId}`);
         if (!res.ok) throw new Error('Failed to load attempt');
-        const data = await res.json();
-        setAttempt(data);
+        setAttempt(await res.json());
       }
-    } catch (err) {
-      setError('Failed to load analytics data.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('Failed to load analytics data.'); }
+    finally { setLoading(false); }
   };
 
   const getPrediction = async () => {
     if (!attempt) return;
-
-    // 1. Start Animation
     setAnalyzing(true);
     setProgress(0);
-
-    // Simulate progress bar filling up to 90%
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 90 ? 90 : prev + 10));
-    }, 500);
-
+    const interval = setInterval(() => setProgress((prev) => Math.min(prev + 8, 88)), 400);
     try {
       const res = await fetch('/api/ai/predict', { method: 'POST' });
       const json = await res.json();
-
-      // 2. Finish Animation
       clearInterval(interval);
       setProgress(100);
-
-      // Small delay to let user see 100%
-      setTimeout(() => {
-        setPrediction(json);
-        setAnalyzing(false);
-      }, 500);
-    } catch (e) {
+      setTimeout(() => { setPrediction(json); setAnalyzing(false); }, 400);
+    } catch {
       clearInterval(interval);
       setAnalyzing(false);
-      alert('AI Service Unavailable');
+      alert('AI service unavailable.');
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="p-10 text-center flex justify-center">
-        <Loader2 className="animate-spin mr-2" /> Loading Report...
+      <div className="flex items-center justify-center h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin" />
+        <span className="text-[14px] font-medium">Loading report…</span>
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
-      <div className="p-10 text-center space-y-4">
-        <p className="text-red-500 font-medium">{error}</p>
-        <Link href="/dashboard">
-          <Button variant="outline">Go Dashboard</Button>
-        </Link>
+      <div className="max-w-sm mx-auto mt-20 text-center space-y-4">
+        <p className="text-[15px] font-medium text-muted-foreground">{error}</p>
+        <Link href="/dashboard"><Button variant="outline" className="rounded-xl">Back to dashboard</Button></Link>
       </div>
     );
+  }
 
-  const scoreColor =
-    (attempt.score || 0) >= attempt.exam.passingScore
-      ? 'text-green-600'
-      : 'text-red-600';
+  const score = Math.round(attempt.score || 0);
+  const isPassed = attempt.isPassed;
 
   return (
-    <div className="max-w-4xl mx-auto py-10 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Performance Report</h1>
-        <Link href="/dashboard">
-          <Button variant="outline">Back to Dashboard</Button>
-        </Link>
+    <div className="max-w-4xl mx-auto space-y-7 anim-up">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-[13px] text-muted-foreground hover:text-foreground">
+              <ArrowLeft size={15} /> Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Performance report</h1>
+            <p className="text-muted-foreground text-[14px]">{attempt.exam.title}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Score Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Result Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center py-6">
-            <div className={`text-6xl font-bold mb-2 ${scoreColor}`}>
-              {Math.round(attempt.score || 0)}%
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Score card */}
+        <div className="card-base p-7 flex flex-col items-center justify-center text-center gap-4">
+          <div
+            className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ background: isPassed ? 'oklch(0.94 0.06 155)' : 'oklch(0.96 0.05 25)' }}
+          >
+            {isPassed
+              ? <CheckCircle2 size={36} style={{ color: 'oklch(0.50 0.14 155)' }} />
+              : <XCircle size={36} style={{ color: 'oklch(0.55 0.2 25)' }} />
+            }
+          </div>
+          <div>
+            <div className="text-[56px] font-bold tabular-nums leading-none"
+              style={{ color: isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}
+            >
+              {score}<span className="text-[28px] text-muted-foreground">%</span>
             </div>
-            <p className="text-gray-500 uppercase tracking-wide font-semibold">
-              {attempt.isPassed ? 'PASSED' : 'FAILED'}
-            </p>
-            <p className="text-sm text-gray-400 mt-2">
-              Exam: {attempt.exam.title}
-            </p>
-          </CardContent>
-        </Card>
+            <div
+              className="inline-flex mt-2 px-3 py-1 rounded-full text-[11px] font-semibold"
+              style={{
+                background: isPassed ? 'oklch(0.94 0.06 155)' : 'oklch(0.96 0.05 25)',
+                color: isPassed ? 'oklch(0.40 0.14 155)' : 'oklch(0.55 0.2 25)',
+              }}
+            >
+              {isPassed ? 'Passed' : 'Failed'} — passing score: {attempt.exam.passingScore}%
+            </div>
+          </div>
+          <div className="w-full grid grid-cols-2 gap-3 pt-2">
+            <Link href="/exams" className="contents">
+              <Button variant="outline" className="h-9 text-[13px] rounded-xl font-medium">Browse more</Button>
+            </Link>
+            <Link href="/results" className="contents">
+              <Button className="h-9 text-[13px] rounded-xl font-medium" style={{ background: 'oklch(0.52 0.22 264)' }}>
+                All results
+              </Button>
+            </Link>
+          </div>
+        </div>
 
-        {/* AI Insight Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Coach</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* STATE 1: Not Started */}
-            {!prediction && !analyzing && (
-              <div className="text-center py-4">
-                <p className="mb-4 text-sm text-gray-500">
-                  Get personalized study tips based on this result.
-                </p>
-                <Button
-                  onClick={getPrediction}
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" /> Analyze Weaknesses
-                </Button>
-              </div>
-            )}
+        {/* AI Coach card */}
+        <div className="card-base p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'oklch(0.94 0.04 300)' }}>
+              <Brain size={16} style={{ color: 'oklch(0.55 0.2 300)' }} />
+            </div>
+            <div>
+              <h2 className="font-semibold text-[15px]">AI coach</h2>
+              <p className="text-[12px] text-muted-foreground">Powered by Gemini</p>
+            </div>
+          </div>
 
-            {/* STATE 2: Loading (Progress Bar) */}
-            {analyzing && (
-              <div className="space-y-4 py-4">
-                <p className="text-sm font-medium text-center text-purple-700 animate-pulse">
-                  Gemini AI is analyzing your answers...
-                </p>
-                <Progress value={progress} className="h-2 w-full bg-gray-100" />
-                <p className="text-xs text-center text-gray-400">
-                  This usually takes about 5-10 seconds.
-                </p>
-              </div>
-            )}
+          {/* Not started */}
+          {!prediction && !analyzing && (
+            <div className="space-y-4">
+              <p className="text-[14px] text-muted-foreground leading-relaxed">
+                Get personalised study recommendations and a predicted score for your next attempt based on this result.
+              </p>
+              <Button
+                onClick={getPrediction}
+                className="w-full h-11 font-semibold rounded-xl text-[14px] gap-2"
+                style={{ background: 'oklch(0.55 0.2 300)' }}
+              >
+                <Sparkles size={16} /> Analyse my performance
+              </Button>
+            </div>
+          )}
 
-            {/* STATE 3: Result Shown */}
-            {prediction && (
-              <div className="animate-in fade-in space-y-4">
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 text-sm italic text-gray-800 relative">
-                  <Sparkles className="h-4 w-4 text-purple-500 absolute top-2 right-2" />
-                  "{prediction.feedback}"
+          {/* Loading */}
+          {analyzing && (
+            <div className="space-y-5 py-2">
+              <div className="space-y-2">
+                <div className="flex justify-between text-[13px]">
+                  <span className="font-medium" style={{ color: 'oklch(0.55 0.2 300)' }}>Gemini is analysing your answers…</span>
+                  <span className="text-muted-foreground font-semibold">{progress}%</span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="text-center p-2 bg-gray-50 rounded">
-                    <span className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                      Focus On
-                    </span>
-                    <span className="font-medium text-sm block leading-tight">
-                      {prediction.recommendedFocus}
-                    </span>
-                  </div>
-                  <div className="text-center p-2 bg-gray-50 rounded">
-                    <span className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                      Next Predicted
-                    </span>
-                    <span className="font-bold text-xl text-purple-600">
-                      {prediction.predictedScore}%
-                    </span>
-                  </div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'oklch(0.93 0.01 255)' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%`, background: 'oklch(0.55 0.2 300)' }}
+                  />
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-[12px] text-muted-foreground">This usually takes 5–10 seconds.</p>
+            </div>
+          )}
+
+          {/* Result */}
+          {prediction && (
+            <div className="space-y-4 animate-in fade-in duration-500">
+              <div className="p-4 rounded-xl border text-[14px] leading-relaxed italic"
+                style={{ background: 'oklch(0.94 0.04 300)', borderColor: 'oklch(0.88 0.06 300)', color: 'oklch(0.25 0.08 300)' }}
+              >
+                <Sparkles size={13} className="inline mr-2 mb-0.5" style={{ color: 'oklch(0.55 0.2 300)' }} />
+                {prediction.feedback}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-border" style={{ background: 'oklch(0.97 0.005 255)' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Target size={12} className="text-muted-foreground" />
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Focus on</p>
+                  </div>
+                  <p className="text-[14px] font-semibold">{prediction.recommendedFocus}</p>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border" style={{ background: 'oklch(0.97 0.005 255)' }}>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingUp size={12} className="text-muted-foreground" />
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Predicted next</p>
+                  </div>
+                  <p className="text-[24px] font-bold tabular-nums" style={{ color: 'oklch(0.55 0.2 300)' }}>
+                    {prediction.predictedScore}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

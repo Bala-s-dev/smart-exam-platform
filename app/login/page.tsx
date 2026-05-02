@@ -2,125 +2,156 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress'; //
-import { Lock, Loader2 } from 'lucide-react';
+import { GraduationCap, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+
+const CACHE_KEY = 'smartexam_user';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // New loading state
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); // Start loading
+    setLoading(true);
     setError('');
-
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
+        credentials: 'include',
       });
 
       if (res.ok) {
-        router.push('/dashboard');
-        router.refresh();
+        // Fetch full user and write to cache BEFORE navigating
+        const meRes = await fetch('/api/auth/me', { credentials: 'include' });
+        if (meRes.ok) {
+          const { user } = await meRes.json();
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(user));
+          } catch {}
+        }
+        // Full page reload so navbar mounts fresh and reads cache immediately
+        window.location.href = '/dashboard';
       } else {
         const data = await res.json();
         setError(data.error || 'Invalid email or password');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred.');
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col justify-center items-center h-[calc(100vh-10rem)]">
-      <Card className="w-full max-w-md border-none shadow-2xl overflow-hidden">
-        {/* Loading Bar at the top of the card */}
-        {loading && (
-          <Progress value={45} className="h-1 rounded-none animate-pulse" />
-        )}
-
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-2">
-            <Lock className="h-6 w-6 text-primary" />
+    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-[420px] anim-up">
+        <div className="text-center mb-10">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{ background: 'oklch(0.52 0.22 264)' }}
+          >
+            <GraduationCap className="text-white" size={22} />
           </div>
-          <CardTitle className="text-3xl font-extrabold tracking-tight">
-            Welcome Back
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">Sign in to continue.</p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                Email
-              </label>
-              <Input
-                type="email"
-                required
-                className="h-12"
-                placeholder="name@example.com"
-                disabled={loading}
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
+          <h1 className="text-[28px] font-bold tracking-tight text-foreground">
+            Welcome back
+          </h1>
+          <p className="text-muted-foreground text-[15px] mt-1.5">
+            Sign in to your SmartExam account
+          </p>
+        </div>
+
+        <div className="card-base p-8 space-y-5">
+          {error && (
+            <div
+              className="flex items-center gap-2.5 p-3.5 rounded-xl text-sm font-medium"
+              style={{
+                background: 'oklch(0.96 0.05 25)',
+                color: 'oklch(0.55 0.2 25)',
+              }}
+            >
+              <AlertCircle size={16} className="shrink-0" />
+              {error}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                Password
-              </label>
-              <Input
-                type="password"
-                required
-                className="h-12"
-                placeholder="••••••••"
-                disabled={loading}
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="field-label">Email address</label>
+              <div className="relative">
+                <Mail
+                  size={15}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  disabled={loading}
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="pl-10 h-11 rounded-xl border-border text-[14px]"
+                />
+              </div>
             </div>
-            {error && (
-              <p className="text-red-500 text-sm font-medium text-center bg-red-50 p-2 rounded">
-                {error}
-              </p>
-            )}
+
+            <div>
+              <label className="field-label">Password</label>
+              <div className="relative">
+                <Lock
+                  size={15}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  type="password"
+                  required
+                  placeholder="••••••••••"
+                  disabled={loading}
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="pl-10 h-11 rounded-xl border-border text-[14px]"
+                />
+              </div>
+            </div>
+
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/30"
+              className="w-full h-11 text-[15px] font-semibold rounded-xl mt-1"
+              style={{ background: 'oklch(0.52 0.22 264)' }}
             >
               {loading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span className="flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  Signing in…
+                </span>
               ) : (
-                'Sign In'
+                'Sign in'
               )}
             </Button>
           </form>
-          <div className="mt-8 text-center text-sm font-medium">
-            New here?{' '}
-            <Link
-              href="/register"
-              className="text-primary hover:underline font-bold"
-            >
-              Create an account
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="text-center text-[14px] text-muted-foreground mt-6">
+          Don&apos;t have an account?{' '}
+          <Link
+            href="/register"
+            className="font-semibold hover:underline"
+            style={{ color: 'oklch(0.52 0.22 264)' }}
+          >
+            Create one free
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

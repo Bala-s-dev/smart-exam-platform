@@ -4,11 +4,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
-import { TrendingUp, History, AlertCircle, Award } from 'lucide-react';
+import { TrendingUp, AlertCircle, Award, Loader2, ChevronRight, BarChart3, BookOpen } from 'lucide-react';
 
 export default function StudentResultsPage() {
   const [data, setData] = useState<any>(null);
@@ -17,228 +14,196 @@ export default function StudentResultsPage() {
   useEffect(() => {
     fetch('/api/student/results')
       .then((res) => res.json())
-      .then((json) => {
-        setData(json);
-        setLoading(false);
-      });
+      .then((json) => { setData(json); setLoading(false); });
   }, []);
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto py-20 space-y-4 flex flex-col items-center">
-        <p className="text-muted-foreground font-medium animate-pulse">
-          Analyzing Progress...
-        </p>
-        <Progress value={60} className="w-64 h-2 animate-bounce" />
+      <div className="flex items-center justify-center h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin" />
+        <span className="text-[14px] font-medium">Loading results…</span>
       </div>
     );
   }
 
   if (data?.empty) {
     return (
-      <div className="max-w-4xl mx-auto py-20 text-center space-y-6">
-        <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto text-muted-foreground text-2xl">
-          ?
+      <div className="max-w-sm mx-auto mt-24 text-center space-y-5">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: 'oklch(0.93 0.01 255)' }}>
+          <BookOpen size={22} className="text-muted-foreground" />
         </div>
-        <h1 className="text-3xl font-bold">No History Found</h1>
-        <p className="text-muted-foreground">
-          Complete your first exam to unlock predictive analytics.
-        </p>
+        <div>
+          <h1 className="text-xl font-bold">No history yet</h1>
+          <p className="text-muted-foreground text-[14px] mt-1">Complete your first exam to unlock analytics.</p>
+        </div>
         <Link href="/exams">
-          <Button size="lg" className="font-bold">
-            Browse Exams
-          </Button>
+          <Button className="rounded-xl" style={{ background: 'oklch(0.52 0.22 264)' }}>Browse exams</Button>
         </Link>
       </div>
     );
   }
 
-  // FEATURE: Last 3 Exam Data
   const recentThree = data.history.slice(0, 3);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 py-6 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+    <div className="max-w-5xl mx-auto space-y-7 anim-up">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">
-            Learning Progress
-          </h1>
-          <p className="text-muted-foreground mt-1 font-medium">
-            Visualizing your path to mastery.
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Learning progress</h1>
+          <p className="text-muted-foreground text-[15px] mt-0.5">Your complete assessment history and analytics.</p>
         </div>
-        <Card className="px-6 py-3 border-none shadow-sm bg-primary text-primary-foreground text-center">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
-            Mastery Rate
-          </p>
-          <p className="text-3xl font-black">{data.averageScore}%</p>
-        </Card>
+        <div className="card-base px-5 py-3 text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Mastery rate</p>
+          <p className="text-[28px] font-bold gradient-text">{data.averageScore}%</p>
+        </div>
       </div>
 
-      {/* FEATURE: Last 3 Exam Marks Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Recent 3 */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 anim-up-1">
         {recentThree.map((exam: any, i: number) => (
-          <Card
-            key={exam.id}
-            className="p-5 border-none shadow-sm bg-white/60 backdrop-blur-sm relative overflow-hidden group hover:shadow-md transition-shadow"
-          >
+          <div key={exam.id} className="card-base p-5 relative overflow-hidden">
             <div
-              className={`absolute top-0 left-0 w-1.5 h-full ${
-                exam.isPassed ? 'bg-emerald-500' : 'bg-red-500'
-              }`}
+              className="absolute top-0 left-0 w-full h-[3px]"
+              style={{ background: exam.isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}
             />
-            <div className="flex justify-between items-center">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Recent Session {i + 1}
+            <div className="flex items-start justify-between mt-1">
+              <div className="space-y-1 flex-1 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Session {i + 1}
                 </p>
-                <p className="text-sm font-bold truncate max-w-[140px]">
-                  {exam.title}
-                </p>
+                <p className="text-[14px] font-semibold truncate">{exam.title}</p>
               </div>
-              <div
-                className={`text-2xl font-black tabular-nums ${
-                  exam.isPassed ? 'text-emerald-600' : 'text-red-600'
-                }`}
+              <span
+                className="text-[24px] font-bold tabular-nums ml-3"
+                style={{ color: exam.isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}
               >
                 {exam.score}%
-              </div>
+              </span>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-none shadow-xl bg-gradient-to-br from-orange-50 to-white">
-          <CardHeader className="flex flex-row items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <AlertCircle className="h-6 w-6 text-orange-600" />
+      {/* Analysis cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 anim-up-2">
+        {/* Focus areas */}
+        <div className="card-base p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'oklch(0.96 0.06 70)' }}>
+              <AlertCircle size={16} style={{ color: 'oklch(0.62 0.18 55)' }} />
             </div>
-            <CardTitle className="text-xl font-bold">Focus Points</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {data.weakTopics.length > 0 ? (
-              <>
-                <div className="flex flex-wrap gap-2">
-                  {data.weakTopics.map((t: any) => (
-                    <Badge
-                      key={t.name}
-                      className="bg-orange-600 font-bold uppercase tracking-wider px-3 py-1"
-                    >
-                      {t.name}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-orange-100 shadow-sm italic text-sm text-gray-700 leading-relaxed">
-                  "Based on your results in{' '}
-                  <span className="text-orange-600 font-black">
-                    {data.weakTopics[0].name}
+            <h2 className="font-semibold text-[16px]">Focus areas</h2>
+          </div>
+          {data.weakTopics.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {data.weakTopics.map((t: any) => (
+                  <span
+                    key={t.name}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                    style={{ background: 'oklch(0.96 0.06 70)', color: 'oklch(0.50 0.18 55)', border: '1px solid oklch(0.88 0.1 70)' }}
+                  >
+                    {t.name}
                   </span>
-                  , a focused review of these concepts is recommended before
-                  your next attempt."
-                </div>
-              </>
-            ) : (
-              <div className="text-emerald-700 font-bold py-10 text-center flex flex-col items-center gap-2">
-                <Award className="h-10 w-10" /> 🏆 Maximum Proficiency Detected!
+                ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="p-4 rounded-xl text-[13px] italic leading-relaxed"
+                style={{ background: 'oklch(0.97 0.003 255)', border: '1px solid oklch(0.91 0.01 255)', color: 'oklch(0.35 0.03 258)' }}
+              >
+                A focused review of <strong style={{ color: 'oklch(0.62 0.18 55)' }}>{data.weakTopics[0].name}</strong> is recommended before your next attempt.
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center space-y-2">
+              <Award size={28} style={{ color: 'oklch(0.50 0.14 155)' }} className="mx-auto" />
+              <p className="font-semibold text-[15px]">Maximum proficiency!</p>
+              <p className="text-muted-foreground text-[13px]">No weak areas detected.</p>
+            </div>
+          )}
+        </div>
 
-        <Card className="bg-blue-50/50 border-none shadow-sm">
-          <CardHeader className="flex flex-row items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
+        {/* Session overview */}
+        <div className="card-base p-6 space-y-5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'oklch(0.93 0.04 262)' }}>
+              <BarChart3 size={16} style={{ color: 'oklch(0.52 0.22 264)' }} />
             </div>
-            <CardTitle className="text-xl font-bold">
-              Session Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-end border-b pb-2">
-              <span className="text-sm font-medium text-muted-foreground">
-                Total Assessments
-              </span>
-              <span className="text-2xl font-black">{data.totalAttempts}</span>
-            </div>
-            <div className="flex justify-between items-end border-b pb-2">
-              <span className="text-sm font-medium text-muted-foreground">
-                Latest Score
-              </span>
-              <span className="text-2xl font-black">
-                {data.history[0]?.score}%
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+            <h2 className="font-semibold text-[16px]">Session overview</h2>
+          </div>
+          <div className="space-y-3">
+            {[
+              { label: 'Total assessments', value: data.totalAttempts },
+              { label: 'Average score', value: `${data.averageScore}%` },
+              { label: 'Latest score', value: `${data.history[0]?.score ?? 0}%` },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                <span className="text-[14px] text-muted-foreground font-medium">{item.label}</span>
+                <span className="text-[18px] font-bold tabular-nums">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden bg-white/40">
-        <CardHeader className="bg-white/60 border-b">
-          <CardTitle className="font-bold">Assessment Registry</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-muted/50 border-y text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                <tr>
-                  <th className="p-5">Assessment Title</th>
-                  <th className="p-5">Date</th>
-                  <th className="p-5">Score</th>
-                  <th className="p-5 text-right">Details</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {data.history.map((item: any) => (
-                  <tr
-                    key={item.id}
-                    className="group hover:bg-primary/5 transition-colors"
-                  >
-                    <td className="p-5 font-bold">{item.title}</td>
-                    <td className="p-5 text-muted-foreground font-medium">
-                      {formatDate(item.date)}
-                    </td>
-                    <td className="p-5">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`text-xl font-black tabular-nums ${
-                            item.isPassed ? 'text-emerald-600' : 'text-red-600'
-                          }`}
-                        >
-                          {item.score}%
-                        </span>
-                        <Badge
-                          className={`border-none ${
-                            item.isPassed
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          {item.isPassed ? 'Passed' : 'Failed'}
-                        </Badge>
-                      </div>
-                    </td>
-                    <td className="p-5 text-right">
-                      <Link
-                        href={`/exams/${item.examId}/analytics?attemptId=${item.id}`}
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="font-bold border-2 hover:bg-white group-hover:border-primary"
-                        >
-                          View Report
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
+      {/* History table */}
+      <div className="card-base overflow-hidden anim-up-3">
+        <div className="px-6 py-4 border-b border-border flex items-center gap-2">
+          <TrendingUp size={16} className="text-muted-foreground" />
+          <h2 className="font-semibold text-[15px]">Assessment registry</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr style={{ background: 'oklch(0.97 0.005 255)' }}>
+                {['Assessment', 'Date', 'Score', ''].map((h) => (
+                  <th key={h} className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {h}
+                  </th>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {data.history.map((item: any) => (
+                <tr key={item.id} className="trow">
+                  <td className="px-6 py-4">
+                    <p className="text-[14px] font-semibold">{item.title}</p>
+                  </td>
+                  <td className="px-6 py-4 text-[13px] text-muted-foreground font-medium whitespace-nowrap">
+                    {formatDate(item.date)}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-[18px] font-bold tabular-nums"
+                        style={{ color: item.isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}
+                      >
+                        {item.score}%
+                      </span>
+                      <span
+                        className="px-2 py-0.5 rounded-md text-[11px] font-semibold"
+                        style={{
+                          background: item.isPassed ? 'oklch(0.94 0.06 155)' : 'oklch(0.96 0.05 25)',
+                          color: item.isPassed ? 'oklch(0.40 0.14 155)' : 'oklch(0.55 0.2 25)',
+                        }}
+                      >
+                        {item.isPassed ? 'Passed' : 'Failed'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Link href={`/exams/${item.examId}/analytics?attemptId=${item.id}`}>
+                      <Button variant="ghost" size="sm" className="text-[12px] font-semibold gap-1 text-muted-foreground hover:text-foreground h-7 px-3 rounded-lg">
+                        Report <ChevronRight size={13} />
+                      </Button>
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

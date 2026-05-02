@@ -1,11 +1,11 @@
+/* app/exams/[id]/results/page.tsx */
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { BookOpen, TrendingUp, History, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TrendingUp, Home, Loader2, CheckCircle2, XCircle, BarChart3 } from 'lucide-react';
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -19,72 +19,100 @@ export default function ResultsPage() {
       .then((data) => setResult(data));
   }, [attemptId]);
 
-  if (!result)
-    return <div className="p-10 text-center">Calculating results...</div>;
+  if (!result) {
+    return (
+      <div className="flex items-center justify-center h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 size={20} className="animate-spin" />
+        <span className="text-[14px] font-medium">Calculating results…</span>
+      </div>
+    );
+  }
 
   const isPassed = result.isPassed;
+  const score = Math.round(result.score);
 
   return (
-    <div className="max-w-xl mx-auto py-20 flex flex-col items-center text-center space-y-8 animate-in zoom-in-95 duration-500">
-      <div
-        className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl shadow-2xl mb-4
-        ${
-          isPassed
-            ? 'bg-emerald-100 text-emerald-600 shadow-emerald-500/20'
-            : 'bg-red-100 text-red-600 shadow-red-500/20'
-        }`}
-      >
-        {isPassed ? '🏆' : '📚'}
-      </div>
-
-      <div className="space-y-2">
-        <h1 className="text-4xl font-extrabold tracking-tight">
-          {isPassed ? 'Performance Verified!' : 'Session Concluded'}
-        </h1>
-        <p className="text-muted-foreground font-medium">
-          Exam Attempt: {result.exam.title}
-        </p>
-      </div>
-
-      <Card
-        className={`w-full border-2 p-8 overflow-hidden relative
-        ${
-          isPassed
-            ? 'border-emerald-200 bg-emerald-50/30'
-            : 'border-red-200 bg-red-50/30'
-        }`}
-      >
-        <div className="text-8xl font-black tracking-tighter mb-4 tabular-nums">
-          {Math.round(result.score)}
-          <span className="text-4xl text-muted-foreground/40">%</span>
+    <div className="max-w-md mx-auto py-12 flex flex-col items-center text-center space-y-7 anim-up">
+      {/* Score ring */}
+      <div className="relative">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="68" fill="none" stroke="oklch(0.93 0.01 255)" strokeWidth="10" />
+          <circle
+            cx="80" cy="80" r="68"
+            fill="none"
+            stroke={isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)'}
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={`${2 * Math.PI * 68}`}
+            strokeDashoffset={`${2 * Math.PI * 68 * (1 - score / 100)}`}
+            transform="rotate(-90 80 80)"
+            style={{ transition: 'stroke-dashoffset 1s ease' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-4xl font-bold tabular-nums">{score}<span className="text-xl text-muted-foreground">%</span></span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Score</span>
         </div>
-        <p
-          className={`font-bold uppercase tracking-widest text-xs py-1 px-3 rounded-full inline-block
-          ${
-            isPassed
-              ? 'bg-emerald-200 text-emerald-700'
-              : 'bg-red-200 text-red-700'
-          }`}
-        >
-          {isPassed ? 'Standard Achieved' : 'Criteria Not Met'}
-        </p>
-      </Card>
+      </div>
 
-      <div className="grid grid-cols-2 gap-4 w-full pt-4">
-        <Link href="/dashboard" className="w-full">
-          <Button variant="outline" className="w-full h-14 font-bold border-2">
-            Exit to Portal
+      {/* Status */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-center gap-2">
+          {isPassed
+            ? <CheckCircle2 size={22} style={{ color: 'oklch(0.50 0.14 155)' }} />
+            : <XCircle size={22} style={{ color: 'oklch(0.55 0.2 25)' }} />
+          }
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isPassed ? 'Well done!' : 'Keep going!'}
+          </h1>
+        </div>
+        <p className="text-muted-foreground text-[15px]">{result.exam.title}</p>
+        <span
+          className="inline-flex px-3 py-1 rounded-full text-[12px] font-semibold"
+          style={{
+            background: isPassed ? 'oklch(0.94 0.06 155)' : 'oklch(0.96 0.05 25)',
+            color: isPassed ? 'oklch(0.40 0.14 155)' : 'oklch(0.55 0.2 25)',
+          }}
+        >
+          {isPassed ? 'Passed — standard achieved' : 'Failed — criteria not met'}
+        </span>
+      </div>
+
+      {/* Details */}
+      <div className="w-full card-base p-5 grid grid-cols-2 gap-4 text-left">
+        <div className="p-3 rounded-xl" style={{ background: 'oklch(0.97 0.005 255)' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Your score</p>
+          <p className="text-[24px] font-bold tabular-nums" style={{ color: isPassed ? 'oklch(0.50 0.14 155)' : 'oklch(0.55 0.2 25)' }}>
+            {score}%
+          </p>
+        </div>
+        <div className="p-3 rounded-xl" style={{ background: 'oklch(0.97 0.005 255)' }}>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Pass mark</p>
+          <p className="text-[24px] font-bold tabular-nums">{result.exam.passingScore}%</p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="w-full grid grid-cols-2 gap-3">
+        <Link href="/dashboard" className="contents">
+          <Button variant="outline" className="h-11 font-semibold rounded-xl text-[14px] gap-1.5">
+            <Home size={15} /> Dashboard
           </Button>
         </Link>
-        <Link
-          href={`/exams/${result.examId}/analytics?attemptId=${attemptId}`}
-          className="w-full"
-        >
-          <Button className="w-full h-14 font-bold shadow-lg shadow-primary/20 gap-2">
-            <TrendingUp className="h-5 w-5" /> AI Feedback
+        <Link href={`/exams/${result.examId}/analytics?attemptId=${attemptId}`} className="contents">
+          <Button
+            className="h-11 font-semibold rounded-xl text-[14px] gap-1.5"
+            style={{ background: 'oklch(0.52 0.22 264)' }}
+          >
+            <TrendingUp size={15} /> AI feedback
           </Button>
         </Link>
       </div>
+
+      {/* Secondary */}
+      <Link href="/exams" className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+        Browse more exams →
+      </Link>
     </div>
   );
 }

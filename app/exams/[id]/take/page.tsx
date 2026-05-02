@@ -1,27 +1,15 @@
+/* app/exams/[id]/take/page.tsx */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AttemptTimer } from '@/components/attempt-timer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import {
-  ChevronLeft,
-  ChevronRight,
-  ShieldCheck,
-  CheckCircle2,
-  Loader2,
-  Code2,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, Loader2, Code2, AlertTriangle } from 'lucide-react';
 
-export default function TakeExamPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function TakeExamPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const attemptId = searchParams.get('attemptId');
@@ -34,14 +22,10 @@ export default function TakeExamPage({
 
   useEffect(() => {
     if (!attemptId) return;
-
     fetch(`/api/attempts/${attemptId}`)
       .then((res) => res.json())
-      .then((data) => {
-        setExam(data.exam);
-        setLoading(false);
-      })
-      .catch((err) => console.error('Failed to load exam'));
+      .then((data) => { setExam(data.exam); setLoading(false); })
+      .catch((err) => console.error('Failed to load exam', err));
   }, [attemptId]);
 
   const handleSelect = (value: string) => {
@@ -51,17 +35,12 @@ export default function TakeExamPage({
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    const formattedAnswers = Object.entries(answers).map(([qId, val]) => ({
-      questionId: qId,
-      selectedOption: val,
-    }));
-
+    const formattedAnswers = Object.entries(answers).map(([qId, val]) => ({ questionId: qId, selectedOption: val }));
     const res = await fetch(`/api/attempts/${attemptId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answers: formattedAnswers }),
     });
-
     if (res.ok) {
       router.push(`/exams/${exam.id}/results?attemptId=${attemptId}`);
     } else {
@@ -70,177 +49,191 @@ export default function TakeExamPage({
     }
   };
 
-  /**
-   * Logic to format text: 
-   * 1. Detects if code exists (semicolons or 'javascript' keyword).
-   * 2. Splits by semicolon to create new lines.
-   * 3. Separates the intro/outro text from the code block.
-   */
   const renderFormattedQuestion = (text: string) => {
     if (!text.includes(';') && !text.toLowerCase().includes('javascript')) {
       return <span className="leading-relaxed">{text}</span>;
     }
-
-    // Attempt to separate intro text (e.g., "Consider the following...") from code
     const parts = text.split(/(javascript|var|let|const|function)/i);
     const intro = parts[0];
     const codeAndOutro = text.substring(intro.length);
-
-    // Find the last question mark to separate the code from the actual question
     const lastQuestionMark = codeAndOutro.lastIndexOf('?');
-    const codePart = lastQuestionMark !== -1 
-      ? codeAndOutro.substring(0, lastQuestionMark + 1).split(' ').slice(0, -5).join(' ') 
+    const codePart = lastQuestionMark !== -1
+      ? codeAndOutro.substring(0, lastQuestionMark + 1).split(' ').slice(0, -5).join(' ')
       : codeAndOutro;
-    
     const outro = text.replace(intro, '').replace(codePart, '').trim();
-
-    // Split code lines by semicolon
     const codeLines = codePart.replace(/javascript/i, '').split(';').map(l => l.trim()).filter(l => l.length > 0);
-
     return (
       <div className="space-y-4 w-full">
-        {intro && <p className="text-slate-700 leading-relaxed font-normal">{intro.trim()}</p>}
-        
-        <div className="relative group">
-          <div className="absolute -left-2 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
-          <div className="bg-slate-950 text-slate-200 p-4 md:p-6 rounded-xl font-mono text-xs md:text-sm overflow-x-auto shadow-inner border border-slate-800">
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-800 text-slate-500">
-              <Code2 className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Source Snippet</span>
-            </div>
+        {intro && <p className="text-foreground leading-relaxed font-normal">{intro.trim()}</p>}
+        <div className="rounded-xl overflow-hidden border" style={{ background: 'oklch(0.13 0.02 260)', borderColor: 'oklch(0.22 0.03 258)' }}>
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: 'oklch(0.22 0.03 258)' }}>
+            <Code2 size={13} style={{ color: 'oklch(0.52 0.04 258)' }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'oklch(0.52 0.04 258)' }}>Source snippet</span>
+          </div>
+          <div className="p-4 font-mono text-[13px] overflow-x-auto">
             {codeLines.map((line, i) => (
-              <div key={i} className="flex gap-4 group/line">
-                <span className="text-slate-600 select-none w-4 text-right tabular-nums">{i + 1}</span>
-                <span className="text-emerald-400">
-                  {line}<span className="text-slate-500">;</span>
-                </span>
+              <div key={i} className="flex gap-4">
+                <span className="select-none w-5 text-right tabular-nums shrink-0" style={{ color: 'oklch(0.40 0.03 258)' }}>{i + 1}</span>
+                <span style={{ color: 'oklch(0.75 0.12 155)' }}>{line}<span style={{ color: 'oklch(0.40 0.03 258)' }}>;</span></span>
               </div>
             ))}
           </div>
         </div>
-
-        {outro && <p className="text-slate-900 font-bold leading-relaxed pt-2">{outro}</p>}
+        {outro && <p className="text-foreground font-semibold leading-relaxed">{outro}</p>}
       </div>
     );
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-sm font-medium text-muted-foreground animate-pulse">
-          Securing session...
-        </p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 size={26} className="animate-spin" style={{ color: 'oklch(0.52 0.22 264)' }} />
+        <p className="text-[14px] font-medium text-muted-foreground">Securing exam session…</p>
       </div>
     );
+  }
 
   const question = exam.questions[currentQIndex];
   const progress = ((currentQIndex + 1) / exam.questions.length) * 100;
   const isLastQuestion = currentQIndex === exam.questions.length - 1;
+  const answeredCount = Object.keys(answers).length;
 
   return (
-    <div className="max-w-3xl mx-auto py-4 md:py-10 px-3 md:px-6 space-y-4 md:space-y-6">
-      <header className="sticky top-2 z-50 backdrop-blur-lg bg-white/80 border border-slate-200/60 shadow-sm rounded-2xl p-3 md:p-5">
+    <div className="max-w-2xl mx-auto py-4 md:py-8 space-y-4">
+      {/* Sticky header */}
+      <header className="sticky top-[60px] z-40 card-base px-4 md:px-6 py-3.5 mb-2">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1 min-w-0">
-            <div className="flex items-center gap-1.5 text-primary">
-              <ShieldCheck className="w-4 h-4 shrink-0" />
-              <h1 className="text-sm md:text-base font-bold tracking-tight truncate">
-                {exam.title}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider text-muted-foreground bg-slate-100 px-2 py-0.5 rounded">
-                Q {currentQIndex + 1} / {exam.questions.length}
-              </span>
-              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                {Math.round(progress)}%
-              </span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ShieldCheck size={16} style={{ color: 'oklch(0.52 0.22 264)' }} className="shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[14px] font-semibold truncate">{exam.title}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'oklch(0.93 0.04 262)', color: 'oklch(0.40 0.15 264)' }}>
+                  Q{currentQIndex + 1} / {exam.questions.length}
+                </span>
+                <span className="text-[11px] font-semibold text-muted-foreground">
+                  {answeredCount} answered
+                </span>
+              </div>
             </div>
           </div>
-
-          <AttemptTimer
-            durationMinutes={exam.durationMinutes}
-            onTimeUp={handleSubmit}
+          <AttemptTimer durationMinutes={exam.durationMinutes} onTimeUp={handleSubmit} />
+        </div>
+        {/* Progress bar */}
+        <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: 'oklch(0.93 0.01 255)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progress}%`, background: 'oklch(0.52 0.22 264)' }}
           />
         </div>
-        <Progress value={progress} className="h-1 mt-3 bg-slate-100" />
       </header>
 
-      <div
-        key={currentQIndex}
-        className="animate-in fade-in slide-in-from-right-4 duration-500"
-      >
-        <Card className="border-none shadow-sm md:shadow-md bg-white rounded-2xl md:rounded-3xl overflow-hidden">
-          <CardHeader className="pt-6 pb-4 px-5 md:px-10">
-            <CardTitle className="text-lg md:text-xl font-semibold leading-snug text-slate-800">
-              {renderFormattedQuestion(question.text)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 md:px-10 pb-8">
-            <RadioGroup
-              onValueChange={handleSelect}
-              value={answers[question.id] || ''}
-              className="grid gap-2.5"
-            >
-              {question.options.map((opt: any, idx: number) => {
-                const isSelected = answers[question.id] === opt.text;
-                return (
-                  <Label
-                    key={idx}
-                    htmlFor={`opt-${idx}`}
-                    className={`
-                      group relative flex items-center gap-3 p-4 md:p-5 rounded-xl border-2 transition-all duration-200 cursor-pointer
-                      ${isSelected ? 'border-primary bg-primary/[0.02] ring-1 ring-primary/10' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}
-                    `}
+      {/* Question card */}
+      <div key={currentQIndex} className="animate-in fade-in slide-in-from-right-3 duration-300">
+        <div className="card-base p-6 md:p-8 space-y-6">
+          {/* Question text */}
+          <div className="text-[16px] md:text-[17px] font-medium leading-relaxed text-foreground">
+            {renderFormattedQuestion(question.text)}
+          </div>
+
+          {/* Options */}
+          <RadioGroup onValueChange={handleSelect} value={answers[question.id] || ''} className="space-y-2.5">
+            {question.options.map((opt: any, idx: number) => {
+              const isSelected = answers[question.id] === opt.text;
+              const labels = ['A', 'B', 'C', 'D'];
+              return (
+                <Label
+                  key={idx}
+                  htmlFor={`opt-${idx}`}
+                  className="group relative flex items-start gap-3.5 p-4 rounded-xl border-2 cursor-pointer transition-all duration-150"
+                  style={{
+                    borderColor: isSelected ? 'oklch(0.52 0.22 264)' : 'oklch(0.91 0.012 255)',
+                    background: isSelected ? 'oklch(0.93 0.04 262)' : 'white',
+                  }}
+                >
+                  <RadioGroupItem value={opt.text} id={`opt-${idx}`} className="sr-only" />
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0 transition-all"
+                    style={{
+                      background: isSelected ? 'oklch(0.52 0.22 264)' : 'oklch(0.95 0.01 255)',
+                      color: isSelected ? 'white' : 'oklch(0.52 0.04 258)',
+                    }}
                   >
-                    <RadioGroupItem value={opt.text} id={`opt-${idx}`} className="sr-only" />
-                    <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'border-primary bg-primary' : 'border-slate-300'}`}>
-                      {isSelected && <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white" />}
-                    </div>
-                    <span className={`text-sm md:text-base font-medium leading-snug pr-6 transition-colors ${isSelected ? 'text-slate-900' : 'text-slate-600'}`}>
-                      {opt.text}
-                    </span>
-                    {isSelected && <CheckCircle2 className="absolute right-4 w-4 h-4 md:w-5 md:h-5 text-primary animate-in zoom-in" />}
-                  </Label>
-                );
-              })}
-            </RadioGroup>
-          </CardContent>
-        </Card>
+                    {isSelected ? <CheckCircle2 size={14} /> : labels[idx]}
+                  </div>
+                  <span className="text-[14px] md:text-[15px] leading-relaxed font-medium pt-0.5 flex-1" style={{ color: isSelected ? 'oklch(0.30 0.12 264)' : 'oklch(0.35 0.03 258)' }}>
+                    {opt.text}
+                  </span>
+                </Label>
+              );
+            })}
+          </RadioGroup>
+        </div>
       </div>
 
-      <footer className="flex justify-between items-center gap-3 pt-2">
+      {/* Navigation */}
+      <div className="flex justify-between items-center gap-3">
         <Button
           variant="ghost"
-          size="lg"
-          className="rounded-xl font-bold text-slate-500 hover:bg-slate-100 px-4 md:px-8 h-11 md:h-12 transition-all active:scale-95"
           onClick={() => setCurrentQIndex((prev) => Math.max(0, prev - 1))}
           disabled={currentQIndex === 0}
+          className="gap-1.5 rounded-xl h-10 px-5 text-[14px] font-medium text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeft className="w-5 h-5 md:mr-2" />
-          <span className="hidden md:inline">Previous</span>
+          <ChevronLeft size={16} />
+          <span className="hidden sm:inline">Previous</span>
         </Button>
+
+        {/* Question dots */}
+        <div className="flex items-center gap-1.5 flex-wrap justify-center flex-1 max-w-xs">
+          {exam.questions.map((_: any, i: number) => (
+            <button
+              key={i}
+              onClick={() => setCurrentQIndex(i)}
+              className="w-6 h-6 rounded-md text-[10px] font-bold transition-all"
+              style={{
+                background: i === currentQIndex
+                  ? 'oklch(0.52 0.22 264)'
+                  : answers[exam.questions[i].id]
+                  ? 'oklch(0.50 0.14 155)'
+                  : 'oklch(0.93 0.01 255)',
+                color: i === currentQIndex || answers[exam.questions[i].id] ? 'white' : 'oklch(0.52 0.04 258)',
+              }}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
 
         {isLastQuestion ? (
           <Button
             onClick={handleSubmit}
             disabled={submitting}
-            size="lg"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold px-8 md:px-12 h-11 md:h-12 shadow-lg transition-all active:scale-95"
+            className="gap-1.5 rounded-xl h-10 px-5 text-[14px] font-semibold"
+            style={{ background: 'oklch(0.50 0.14 155)', color: 'white' }}
           >
-            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Assessment'}
+            {submitting ? <Loader2 size={15} className="animate-spin" /> : 'Submit'}
           </Button>
         ) : (
           <Button
             onClick={() => setCurrentQIndex((prev) => prev + 1)}
-            size="lg"
-            className="rounded-xl font-bold px-8 md:px-12 h-11 md:h-12 shadow-lg shadow-primary/10 transition-all active:scale-95"
+            className="gap-1.5 rounded-xl h-10 px-5 text-[14px] font-semibold"
+            style={{ background: 'oklch(0.52 0.22 264)' }}
           >
-            Next <ChevronRight className="w-5 h-5 md:ml-2" />
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight size={16} />
           </Button>
         )}
-      </footer>
+      </div>
+
+      {/* Unanswered warning */}
+      {isLastQuestion && Object.keys(answers).length < exam.questions.length && (
+        <div className="flex items-center gap-2.5 p-3.5 rounded-xl text-[13px] font-medium anim-up"
+          style={{ background: 'oklch(0.96 0.06 70)', color: 'oklch(0.50 0.14 70)', border: '1px solid oklch(0.88 0.1 70)' }}
+        >
+          <AlertTriangle size={15} className="shrink-0" />
+          You have {exam.questions.length - Object.keys(answers).length} unanswered question(s).
+        </div>
+      )}
     </div>
   );
 }
