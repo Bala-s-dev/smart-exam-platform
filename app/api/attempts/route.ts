@@ -4,7 +4,7 @@ import { getSession } from '@/lib/auth';
 import { z } from 'zod';
 
 const startAttemptSchema = z.object({
-  examId: z.string(),
+  examId: z.string().min(1),
 });
 
 export async function POST(req: Request) {
@@ -16,30 +16,38 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { examId } = startAttemptSchema.parse(body);
 
-    // 1. Check if exam exists
+    // SECURITY FIX: verify exam exists AND is published
     const exam = await prisma.exam.findUnique({ where: { id: examId } });
-    if (!exam)
+    if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
+    }
+    if (!exam.isPublished) {
+      return NextResponse.json(
+        { error: 'Exam is not available' },
+        { status: 403 },
+      );
+    }
 
-    // 2. Create the Attempt Record
     const attempt = await prisma.examAttempt.create({
       data: {
         userId: (session as any).id,
-        examId: examId,
+        examId,
         startedAt: new Date(),
       },
     });
 
     return NextResponse.json(attempt, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.name === 'ZodError') {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
     return NextResponse.json(
       { error: 'Failed to start exam' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// Get user's history
 export async function GET() {
   const session = await getSession();
   if (!session)
@@ -54,7 +62,7 @@ export async function GET() {
       orderBy: { startedAt: 'desc' },
     });
     return NextResponse.json(attempts);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
